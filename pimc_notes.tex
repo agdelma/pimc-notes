@@ -1,0 +1,182 @@
+\documentclass[prb,aps,amssym,nofootinbib,floatfix,notitlepage]{revtex4-1} 
+\usepackage{graphicx,natbib}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{siunitx}
+\usepackage{bbm}
+
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+\newcommand{\e}[1]{\mathrm{e}^{#1}}
+\newcommand{\sgn}[1]{\mathrm{sgn}(#1)}
+\renewcommand{\eqref}[1]{Eq.~(\ref{#1})}
+\newcommand{\R}{\vec{R}}
+
+\begin{document}
+\title{Path Integral Monte Carlo and the Worm Algorithm in the Spatial
+Continuum}
+\author{Adrian Del Maestro}
+\email{Adrian.DelMaestro@uvm.edu}
+\affiliation{Department of Physics, University of Vermont, Burlington, VT 05405, USA}
+
+\date{\today}
+\maketitle
+
+% ---------------------------------------------------------------------------------
+\section{Expectation Values and the Partition Function}
+% ---------------------------------------------------------------------------------
+
+The goal of these lecture notes will be to describe a stochastically exact
+quantum Monte Carlo method for computing the expectation value of observables
+for systems of interacting particles in the spatial continuum described by a
+Hamiltonian $\hat{\mathcal{H}}$ which conserves particle number.  We begin with
+the general definition for the expectation value of some operator
+$\hat{\mathcal{O}}$ in terms of a trace over configurations
+%
+\begin{equation}
+    \langle \mathcal{O} \rangle = \frac{1}{\mathcal{Z}} \mathrm{Tr}\, 
+    \hat{\mathcal{O}}\e{-\beta \hat{\mathcal{H}}} 
+\label{eq:operatorExpectationValue}
+\end{equation}
+%
+where $\beta = 1/k_{\mathrm{B}}T$ with $k_{\mathrm{B}}$ the Boltzmann constant
+and the partition function $Z$ is given by
+%
+\begin{equation}
+    \mathcal{Z} = \mathrm{Tr}\,\e{-\beta \hat{\mathcal{H}}} 
+    = \mathrm{Tr}\,\hat{\rho} 
+\label{eq:partitionFunction} 
+\end{equation}
+%
+where 
+%
+\begin{equation}
+\hat{\rho} \equiv \e{-\beta \hat{\mathcal{H}}} 
+\end{equation}
+%
+is the density matrix.  In order to compute the trace in
+\eqref{eq:partitionFunction} for a given system described by Hamiltonian
+$\mathcal{H}$ we need to identify a set of convenient basis states
+$|\alpha\rangle$ that can be efficiently sampled allowing us to write the
+partition function as the direct sum 
+%
+\begin{equation}
+    \mathcal{Z} =  \sum_{\alpha}\langle \alpha | \e{-\beta \hat{\mathcal{H}}}
+    |\alpha \rangle.
+\end{equation}
+%
+In the next section we will introduce the specific form of $|\alpha\rangle$
+in terms of the spatial positions of interacting particles.
+
+% ---------------------------------------------------------------------------------
+\section{Path Integral Monte Carlo}
+% ---------------------------------------------------------------------------------
+The path-integral Monte Carlo method was first introduced by Ceperley, and a
+comprehensive review can be found in Ref.~[\onlinecite{Ceperley:1995gr}]. Here
+we will attempt to provide an introduction to the method with sufficient
+details to allow for the creation of a simple code.
+
+We are interested in a system of interacting particles described by the
+general many-body Hamiltonian:
+%
+\begin{align}
+    \hat{\mathcal{H}} &= \hat{\mathcal{T}} + \hat{\mathcal{V}} \nonumber \\
+                      &= -\sum_i^N \frac{\hbar^2}{2m_i} \hat{\vec{\nabla}}_i^2 
+    + \sum_{i=1}^N \hat{V}_{i} + \sum_{i < j} \hat{U}_{ij}.
+\label{eq:Hamiltonian}
+\end{align}
+%
+It will be convenient to work in first quantized notation, where the $N$
+particles in the $d$-dimensional spatial continuum are located at positions
+$\vec{r}_i$ with $i=1\ldots N$.  The first term in \eqref{eq:Hamiltonian}
+corresponds to the kinetic energy $\hat{\mathcal{T}}$ where $m_i$ is the mass
+of the $i^{\text{th}}$ particle. The external potential energy $V(\vec{r_i})$
+only depends on the position of a single particle, while the two-body
+interaction potential $U(\vec{r}_i-\vec{r}_j)$ is in general a function of the
+vector displacement between them.  We will most often work with spherically
+symmetric interaction potentials such that $U(\vec{r}_i - \vec{r}_j) =
+U(|\vec{r}_i-\vec{r}_j|)$. A physical system of interest could include trapped
+ultra-cold atoms, where $V(\vec{r}_i) \sim |\vec{r}_i|^2$ is a harmonic
+trapping potential and the particles interact via an induced dipole-dipole
+interaction $U(\vec{r}_i - \vec{r}_j) \sim |\vec{r}_i-\vec{r}_j|^{-3}$.
+
+The most natural basis states $|\alpha\rangle$ in this case are just a
+collection of the spatial locations of the $N$ particles, where in the case of
+identical particles, the labels are fictitious. We will employ the convenient
+short-hand notation 
+%
+\begin{equation}
+    |\R\rangle \equiv |\vec{r}_1, \cdots, \vec{r}_N \rangle
+\end{equation}
+%
+where particle conservation enforces the normalization constraint
+%
+\begin{equation}
+\int \mathcal{D}\R\, |\R\rangle \langle \R | = \mathbbm{1}
+\end{equation}
+%
+with 
+%
+\begin{equation}
+    \int\mathcal{D} \R  \equiv \prod_{i=1}^N \int d \vec{r}_i.
+\end{equation}
+%
+In the first-quantized spatial position basis, the partition function can be
+written as a $N \times d$ dimensional integral
+%
+\begin{align}
+    \mathcal{Z} &= \mathrm{Tr}\, \e{-\beta \hat{\mathcal{H}}}  \nonumber \\
+                &= \int d\vec{r}_1 \cdots \int d\vec{r}_N \langle \vec{r}_1,
+    \cdots, \vec{r}_N | \e{-\beta \hat{\mathcal{H}}}| \vec{r}_1, \cdots,
+    \vec{r}_N \rangle \nonumber \\
+&\equiv \int \mathcal{D} \R \langle \R | \e{-\beta \hat{\mathcal{H}}} | \R
+    \rangle.
+\label{eq:ZDR}
+\end{align}
+%
+As terms like this will appear quite frequently, it will be useful to define
+the elements of the density matrix at inverse temperature $\beta$ in the
+spatial basis
+%
+\begin{equation}
+    \rho(\R, \R'; \beta) \equiv \langle \R | \e{-\beta \hat{\mathcal{H}}} |
+    \R'\rangle
+\end{equation}
+%
+where all matrix elements are real and positive. We note that in the spatial
+continuum, the Hilbert space is uncountably infinite, as the particles can take
+on any position in $\mathbbm{R}^d$. This is an important observation that will
+guide the strategy we choose in the duration of these notes.
+
+As we have defined the potential operator $\hat{\mathcal{V}}$ to be diagonal in
+the position basis, it would be extremely convenient if we could decompose the
+density matrix into a product of terms containing $\hat{\mathcal{T}}$ and
+$\hat{\mathcal{V}}$ However, we know that
+$[\hat{\mathcal{T}},\hat{\mathcal{V}}] \ne 0$ and thus
+%
+\begin{align}
+    \hat{\rho} &= \e{-\beta(\hat{\mathcal{T}} + \hat{\mathcal{V}})} \nonumber
+    \\
+&\ne \e{-\beta\hat{\mathcal{T}}}\e{-\beta\hat{\mathcal{V}}}.
+\end{align}
+%
+In fact, by employing the Baker-Campbell-Hausdorff formula we know:
+%
+\begin{equation}
+    \e{\hat{A}+\hat{B}} = \e{\hat{A}}\e{\hat{B}}\e{-\frac{1}{2}[\hat{A},\hat{B}]}
+\end{equation}
+%
+and thus 
+%
+\begin{equation}
+    \hat{\rho} = \e{-\beta\hat{\mathcal{T}}}\e{-\beta\hat{\mathcal{V}}} +
+    \mathrm{O}\left(\beta^2\right).
+\end{equation}
+%
+with the error diverging in the interesting low temperature limit $\beta \to
+\infty$.  
+
+
+\bibliographystyle{apsrev4-1}
+\bibliography{refs}
+
+\end{document}
