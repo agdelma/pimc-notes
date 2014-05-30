@@ -12,6 +12,7 @@
 \newcommand{\sgn}[1]{\mathrm{sgn}(#1)}
 \renewcommand{\eqref}[1]{Eq.~(\ref{#1})}
 \newcommand{\R}{\vec{R}}
+\newcommand{\T}{\mathcal{T}}
 
 \begin{document}
 \title{Path Integral Monte Carlo and the Worm Algorithm in the Spatial
@@ -176,6 +177,7 @@ In fact, by employing the Baker-Campbell-Hausdorff formula we know:
 %
 \begin{equation}
     \e{\hat{A}+\hat{B}} = \e{\hat{A}}\e{\hat{B}}\e{-\frac{1}{2}[\hat{A},\hat{B}]}
+    \label{eq:BCH}
 \end{equation}
 %
 and thus 
@@ -261,14 +263,15 @@ Upon closer examination of the individual terms in the product, we may notice:
 \begin{equation}
     \langle \R_\alpha | \e{-\frac{\beta}{2}\hat{\mathcal{H}}} | R_{\alpha+1}
     \rangle = 
-    \langle \R_\alpha | \hat{\mathcal{U}}\left(-i \hbar \frac{\beta}{M}\right) | R_{\alpha+1}
-    \rangle 
+    \left \langle \R_\alpha \left | \hat{\mathcal{U}}\left(-i \hbar
+    \frac{\beta}{M}\right) \right | R_{\alpha+1}
+    \right \rangle 
 \end{equation}
 %
 where 
 %
 \begin{equation}
-    \hat{\mathcal{U}} \equiv \e{-\frac{i t}{\hbar} \hat{\mathcal{H}}}
+    \hat{\mathcal{U}} \equiv \e{-{i t} \hat{\mathcal{H}}/\hbar}
 \end{equation}
 %
 is the unitary time evolution operator of single particle quantum mechanics.
@@ -306,10 +309,12 @@ boundary condition.
 
 % -------------------------
 \subsection{Configurations}
+\label{sec:configurations}
 
 We are now ready to unambiguously identify the configurations that will be
 sampled in our Monte Carlo. For a system of $N$ particles, they will consist of
-$N$ discrete \emph{worldlines} as shown in Figure~\ref{fig:config}
+$N$ discrete \emph{worldlines} as shown in Figure~\ref{fig:config}. 
+%
 % ---------------------------------------------------------------------------------
 \begin{figure}
 \begin{center}
@@ -327,6 +332,279 @@ while $|R_8\rangle_\mathrm{b} =
 \label{fig:config}
  \end{figure}
 % ---------------------------------------------------------------------------------
+%
+These worldlines are composed of a series of ``beads'' which represent the
+spatial positions of the particles at a given imaginary time slice and a set of
+links which connect them and define a permutation of particle labels.  Thus,
+the primary data structures used to store the configurations of the system
+include a $d \times N \times M$ tensor for the positions and a $2 \times N
+\times M$ tensor for the links.
+
+Motivated by the imaginary time boundary condition $|\R_M\rangle =
+\hat{\mathcal{P}}|\R_0\rangle$, Chandler and Wolynes \cite{Chandler:1981gz}
+introduced an alternative way to think about the worldlines in terms of an
+isomorphism to classical ``ring polymers''.  Under the identity permutation,
+these polymers consist of $M$ beads, but as permutations take place, the number
+of beads can grow to some $n M$ where $n \le N$. This can be most easily
+visualized in two spatial dimensions as shown in Figure~\ref{fig:polymers}.
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.75\columnwidth]{Figures/polymers.pdf}
+\end{center}
+\caption{Discrete particle worldlines can also be viewed as classical ring
+    polymers where only beads on the same imaginary time slice interact between
+    polymers.  Here we have again chosen $N=4$ and $M=8$ with (a) and (b)
+    differing by a particle permutation, which in this picture results in the
+``linking'' of spatially adjacent polymers.}
+\label{fig:polymers}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
+We can now make a number of important observations:
+\begin{enumerate}
+    \item A classical particle would consist of a ``polymer'' of zero radius.
+    \item The spatial extent of a polymer is related to the thermal de Broglie
+    wavelength $\lambda_{\mathrm{dB}} = \sqrt{2\pi \hbar^2 / m k_\mathrm{B} T
+    }$.
+\item For a finite size system with periodic boundary conditions, worldlines
+    can \emph{wind} around the cell as the number of beads per polymer grows
+    via permutations which are more favorable at low temperatures.  The width
+    of the distribution of integer winding numbers is related to the superfluid
+    fraction.
+\end{enumerate}
+
+% -------------------------
+\subsection{Weights}
+Now that we have identified our configurations, in order to devise a sampling
+scheme we must return to the partition function in \eqref{eq:Zpermute} and
+attempt to compute the weights.  Our construction thus far has been
+approximation free, and we have yet to utilize the fact that the new form of
+the partition function includes the elements of effective high temperature
+density matrices in the limit where $M \gg 1$. Consider a single transition
+amplitude:
+%
+\begin{align}
+\rho(\R_\alpha, \R_{\alpha+1}; \tau) &= \langle \R_\alpha | \e{-\tau(\hat{T} +
+\hat{V})}|R_{\alpha+1}\rangle
+\end{align}
+%
+where we can now ignore the fact that $[\hat{\mathcal{T}},\hat{\mathcal{V}}]
+\ne 0$ at the cost of an error that grows as $\tau^2$.  This is the
+\emph{Primitive Approximation} and the error can be made arbitrarily small at a
+given temperature at the linear cost of increasing $M$.  In practice, we can
+utilize various schemes to drastically improve the error by explicitly
+evaluating the commutator that appears in \eqref{eq:BCH} and in general we
+employ a fourth order scheme called the generalized Suzuki factorization
+\cite{Jang:2001cl}. For the purposes of these lecture notes, the primitive
+approximation will be sufficient to illustrate all concepts and we can write
+%
+\begin{align}
+    \rho(\R_\alpha, \R_{\alpha+1}; \tau) &= \langle \R_\alpha | 
+    \e{-\tau\hat{\mathcal{T}}} \e{-\tau\hat{\mathcal{V}})}|R_{\alpha+1}\rangle + \mathrm{O}(\tau^2)
+\nonumber \\
+&= \int \mathcal{D}\R'\, \langle \R_\alpha | 
+\e{-\tau\hat{\T}}|\R'\rangle \langle \R' | \e{-\tau\hat{\mathcal{V}})}|R_{\alpha+1}\rangle 
+\nonumber \\
+&= \int \mathcal{D}\R'\, \langle \R_\alpha | 
+\e{-\tau\hat{\T}}|\R'\rangle \langle \R' |\R_{\alpha+1}\rangle \e{-\tau
+\mathcal{V}(\R_{\alpha+1})} \nonumber \\
+&= \int \mathcal{D}\R'\, \langle \R_\alpha | 
+\e{-\tau\hat{\T}}|\R'\rangle \delta (\R'-\R_{\alpha+1}) \e{-\tau
+\mathcal{V}(\R_{\alpha+1})} \nonumber \\
+&=  \langle \R_\alpha | \e{-\tau\hat{\T}}|\R_{\alpha+1}\rangle  \e{-\tau
+\mathcal{V}(\R_{\alpha+1})} 
+\label{eq:rhoPrimitive}
+\end{align}
+%
+where we have inserted a complete set of states in line 2 and utilized the fact
+that the potential energy operator is diagonal in imaginary time. We have
+introduced a slight abuse of the set notation
+$\R = \{\vec{r}_1, \cdots, \vec{r}_N \}$ where for example the Dirac delta
+function is understood to mean
+%
+\begin{equation}
+    \delta(\R-\R') \equiv \prod_{i=1}^{N}\delta(\vec{r}_i-\vec{r}'_i)
+\end{equation}
+%
+and 
+%
+\begin{equation}
+    \mathcal{V}(\R) \equiv \sum_{i=1}^N V(\vec{r}_i) + \frac{1}{2}\sum_{i,j}
+U(\vec{r}_i-\vec{r}_j).
+\end{equation}
+%
+Since the kinetic energy operator $\hat{\T}$ is clearly not diagonal in the
+spatial position basis, in order to compute the first term in
+\eqref{eq:rhoPrimitive} we can write the position eigenstate in terms of free
+particle plane waves
+%
+\begin{align}
+    |\R \rangle &=  | \vec{r}_1, \cdots, \vec{r}_N \rangle \nonumber \\
+                &= \prod_{i=1}^N \int \frac{d\vec{k}_i}{(2\pi)^d} 
+    \e{i \vec{k}_i \cdot \vec{r}_i} | \vec{k}_1, \cdots, \vec{k}_N\rangle.
+\end{align}
+%
+Defining
+%
+\begin{equation}
+    \lambda \equiv \frac{\hbar^2}{2 m}
+\end{equation}
+%
+we can write
+%
+\begin{align}
+    \langle \R | \e{-\tau\hat{\T}}|\R'\rangle &= \prod_{i=1}^N 
+    \int \frac{d\vec{k}_i}{(2\pi)^d} \int \frac{d\vec{k}'_i}{(2\pi)^d} 
+    \e{-i \vec{k}_i \cdot \vec{r}_i} \e{i \vec{k}'_i \cdot \vec{r}'_i} 
+    \left \langle \vec{k}_1, \cdots, \vec{k}_N \left | \e{-\tau \lambda
+\sum_{j=1}^N\hat{\vec{\nabla}}_j^2} \right | \vec{k}'_1, \cdots, \vec{k}'_N
+\right \rangle \nonumber \\
+&= \prod_{i=1}^N\int \frac{d\vec{k}_i}{(2\pi)^d} \int \frac{d\vec{k}'_i}{(2\pi)^d} 
+\e{-\lambda \tau |\vec{k}'|^2 - i \vec{k}_i \cdot \vec{r}_i + i \vec{k}'_i \cdot
+\vec{r}'_i} \left \langle \vec{k}_1, \cdots, \vec{k}_N | \vec{k}'_1, \cdots,
+\vec{k}'_N \right \rangle \nonumber \\
+&= \prod_{i=1}^N\int \frac{d\vec{k}_i}{(2\pi)^d} \int \frac{d\vec{k}'_i}{(2\pi)^d} 
+\e{-\lambda \tau |\vec{k}'|^2 - i \vec{k}_i \cdot \vec{r}_i + i \vec{k}'_i \cdot
+\vec{r}'_i}  (2\pi)^d \delta(\vec{k}_i-\vec{k}'_i) \nonumber \\
+&= \prod_{i=1}^N\int \frac{d\vec{k}_i}{(2\pi)^d} 
+\e{-\lambda \tau |\vec{k}|^2 + i \vec{k}_i \cdot (\vec{r}'_i - \vec{r}_i)}  
+\nonumber \\
+&= (4\pi \lambda \tau)^{-Nd/2} \mathrm{exp}\,\left( -\frac{1}{4\lambda
+\tau} \sum_{i=1}^N | \vec{r}_i-\vec{r}'_i|^2 \right) 
+\end{align}
+%
+which is just the free particle propagator that can be written in our set
+notation as
+%
+\begin{align}
+\rho_0(\R,\R';\tau) &=  \left \langle \R \left| \e{-\tau \hat{\T}} \right| \R' \right\rangle
+    \nonumber \\
+    &= (4\pi \lambda \tau)^{-Nd/2} \e{-\frac{1}{4\lambda \tau} | \R-\R'|^2}.
+\label{eq:rho0}
+\end{align}
+%
+We may now insert our complete expression for the primitive propagator
+%
+\begin{equation}
+    \rho(\R_\alpha,\R_{\alpha+1};\tau) = \rho_0(\R_\alpha,\R_{\alpha+1};\tau)
+\e{- \tau \mathcal{V}(\R_\alpha)}
+\end{equation}
+%
+into the partition function in \eqref{eq:Zpermute} to find
+%
+\begin{align}
+    \mathcal{Z}  &= (4\pi \lambda \tau)^{-NMd/2} 
+    \frac{1}{N!}\sum_{\mathcal{P}} 
+    \prod_{\alpha=0}^{M-1}\int \mathcal{D}\R_\alpha\,
+\e{-\frac{1}{4\lambda \tau} | \R_\alpha-\R_{\alpha+1}|^2 - \tau
+\mathcal{V}(\R_\alpha)} \nonumber \\
+&= (4\pi \lambda \tau)^{-NMd/2}
+    \frac{1}{N!}\sum_{\mathcal{P}} 
+\prod_{\alpha=0}^{M-1}\prod_{i=1}^N 
+\int d\vec{r}_{i,\alpha} \exp\left\{ 
+    -\sum_{\alpha=0}^M\sum_{i=1}^N
+    \left[\frac{|\vec{r}_{i,\alpha+1}-\vec{r}_{i,\alpha}|^2}{4\lambda \tau}  +
+        \tau V(\vec{r}_{i,\alpha}) + \frac{\tau}{2}\sum_{j=1}^{N}
+    U(\vec{r}_{i,\alpha}-\vec{r}_{j,\alpha})\right]
+\right\}.
+\label{eq:primitiveZ}
+\end{align}
+%
+Because of the product of $M$ copies of the primitive propagator, the finite
+Trotter error we make in the partition function is $\mathrm{O}(\tau)$. This
+partition function is then just a ``path'' integral over all
+possible configurations and permutations of particle worldlines where the
+weight of each configuration is just the exponentiated effective action.
+
+% -------------------------
+\subsection{Updates}
+In order to sample configurations we must devise a series of updates that can
+be proposed and accepted or rejected based on their weights.  We are aided by
+the fact that it is possible to exactly sample the free density matrix
+$\rho_0(\R,\R';\tau)$ since it is just a product of Gaussians.  This will allow
+us to sample the kinetic part of the action in the ensemble and only consider
+the potential action in the weights. We will outline two types of simple updates,
+center-of-mass and staging moves, that are depicted schematically in
+Figure~\ref{fig:pimcMoves}.
+
+
+\subsubsection{Center of Mass}
+A center-of-mass update involves the spatial translation of an entire
+worldline, leaving the kinetic part of the action unchanged.  It proceeds as
+follows:
+\begin{enumerate}
+    \item Choose a single worldline $i \in \{1,\ldots,N\}$ with beads located
+        at $\vec{r}_{i,\alpha}$.
+    \item Generate uniformly distributed random numbers, $\Delta_a$, where
+        $a=1,\ldots,d$ on $(-\delta/2,\delta/2)$ where $\delta$ is a small number that can be
+    modified to optimize the acceptance rate. Construct the vector $\vec{\Delta} =
+    (\Delta_1,\ldots,\Delta_d)$.
+\item Translate the entire worldline by $\vec{\Delta}$ to obtain a new set of
+coordinates $\vec{r}'_{i,\alpha}$ where  $\vec{r}'_{i,\alpha} =
+\vec{r}_{i,\alpha} + \vec{D}$ for $\alpha = 0,\ldots,M-1$.
+\item Accept the update with probability
+    %
+\begin{equation}
+    P_{\text{com}} = \mathrm{min} 
+    \left\{1,\e{-\tau[\mathcal{V}(\vec{r}'_i)-\mathcal{V}(\vec{r}_i)]} \right\}
+\end{equation}
+%
+where 
+%
+\begin{equation}
+    \mathcal{V}(\vec{r_i}) \equiv \sum_{\alpha=0}^{M-1}\left[ V(\vec{r}_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^{N}
+    U(\vec{r}_{i,\alpha}-\vec{r}_{j,\alpha})\right].
+\end{equation}
+%
+\end{enumerate}
+
+\subsubsection{Staging}
+A staging update \cite{Sprik:1985bz} generates a new section of path between two fixed beads at time
+slices $\alpha$ and $\alpha+m$ where $m < M$.
+
+\subsubsection{Permutation Sampling}
+We now address the point of how one can sample the sum over permutations of
+particle labels in Eq.~\ref{eq:primitiveZ}. This is an onerous task, as for $N$
+particles there are $N!$ possible permutations.  Historically this problem was
+addressed in a brute force manner, but explicitly sampling all possible
+reconnections of worldlines, however this limited the total number of
+particles that could be efficiently simulated at low temperature to $N \sim
+100$. In 2006, Boninsegni, Prokof'ev and Svistunov introduced a generalization
+of a previous path integral based lattice quantum Monte Carlo scheme
+\cite{Prokofev:1998ux} that has come to be known as the continuous space
+\emph{worm} algorithm \cite{Boninsegni:2006ed,Boninsegni:2006gc}.
+
+
+% ---------------------------------------------------------------------------------
+\section{Continuous Space Worm Algorithm}
+
+The worm algorithm \cite{Boninsegni:2006ed,Boninsegni:2006gc} (WA) solves the following two problems:
+\begin{enumerate}
+    \item Generalizes the configuration space to allow for simulations of
+        interacting particles in the spatial continuum in the grand canonical
+        ensemble
+    \item Solves the ``permutation'' problem by allowing for the sampling of
+        topologically inequivalent winding sectors using only local updates.
+\end{enumerate}
+This is accomplished by extending the configuration space of worldlines
+discussed in Section~\ref{sec:configurations} to included ``worms'' which are
+open worldlines containing a \emph{head} at time slice $\alpha_h $ and \emph{tail} at
+$\alpha_t$ with a variable imaginary time extent $(\alpha_h -
+\alpha_t)\tau$.  The partition function governing the new system can be written
+as
+%
+\begin{equation}
+    \mathcal{Z}_W = \sum_{N=0}^{\infty} \mathcal{Z}(N) \e{\beta \mu N} + C
+\sum_{\alpha_h,\alpha_t} \int d\vec{r}
+\end{equation}
+%
+
+
+
+
+
 
 
 
