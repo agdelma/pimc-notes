@@ -4,6 +4,8 @@
 \usepackage{amsfonts}
 \usepackage{siunitx}
 \usepackage{bbm}
+\usepackage[bookmarks=true,pdfcreator={Adrian Del Maestro}]{hyperref}
+\usepackage{url}
 
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
 \newcommand{\e}[1]{\mathrm{e}^{#1}}
@@ -28,8 +30,11 @@ Continuum}
 The goal of these lecture notes will be to describe a stochastically exact
 quantum Monte Carlo method for computing the expectation value of observables
 for systems of interacting particles in the spatial continuum described by a
-Hamiltonian $\hat{\mathcal{H}}$ which conserves particle number.  We begin with
-the general definition for the expectation value of some operator
+Hamiltonian $\hat{\mathcal{H}}$ which conserves particle number.  The latest
+version can always be found online at
+\url{https://github.com/agdelma/pimc-notes}.
+
+We begin with the general definition for the expectation value of some operator
 $\hat{\mathcal{O}}$ in terms of a trace over configurations
 %
 \begin{equation}
@@ -112,6 +117,7 @@ where particle conservation enforces the normalization constraint
 %
 \begin{equation}
 \int \mathcal{D}\R\, |\R\rangle \langle \R | = \mathbbm{1}
+\label{eq:Norm}
 \end{equation}
 %
 with 
@@ -145,7 +151,14 @@ spatial basis
 where all matrix elements are real and positive. We note that in the spatial
 continuum, the Hilbert space is uncountably infinite, as the particles can take
 on any position in $\mathbbm{R}^d$. This is an important observation that will
-guide the strategy we choose in the duration of these notes.
+guide the strategy we choose in the duration of these notes. Using the
+expression for $\rho(\R,\R';\beta)$ we can write the partition function:
+%
+\begin{equation}
+\mathcal{Z} = \int \mathcal{D}\R \, \rho(\R,\R;\beta).
+\label{eq:Zrho}
+\end{equation}
+%
 
 As we have defined the potential operator $\hat{\mathcal{V}}$ to be diagonal in
 the position basis, it would be extremely convenient if we could decompose the
@@ -172,8 +185,151 @@ and thus
     \mathrm{O}\left(\beta^2\right).
 \end{equation}
 %
-with the error diverging in the interesting low temperature limit $\beta \to
-\infty$.  
+with the error diverging in the interesting (and quantum) low temperature limit
+$\beta \gg 1$.  However, we may make the rather self-evident observation that
+the Hamiltonian must commute with itself,
+$[\hat{\mathcal{H}},\hat{\mathcal{H}}] = 0$ thus
+%
+\begin{align}
+    \hat{\rho} &= \e{-\beta \hat{\mathcal{H}}} \nonumber \\
+               &= \e{-\frac{\beta}{2}\hat{\mathcal{H}}
+-\frac{\beta}{2}\hat{\mathcal{H}}} \nonumber \\
+&= \e{-\frac{\beta}{2}\hat{\mathcal{H}}}\e{-\frac{\beta}{2}\hat{\mathcal{H}}}.
+\label{eq:HamCommute}
+\end{align}
+%
+In the position basis, this corresponds to the elements of the density matrix
+satisfying the following convolution relation
+%
+\begin{align}
+    \rho(\R,\R';\beta) &=  \langle \R | \e{-\beta \hat{\mathcal{H}}} | \R'\rangle \nonumber \\
+    &=  \langle \R | \e{-\frac{\beta}{2} \hat{\mathcal{H}}} 
+    \e{-\frac{\beta}{2} \hat{\mathcal{H}}}| \R'\rangle \nonumber \\
+    &= \int \mathcal{D}\R''\,
+    \langle \R | \e{-\frac{\beta}{2} \hat{\mathcal{H}}} | \R''\rangle 
+    \langle \R'' | \e{-\frac{\beta}{2} \hat{\mathcal{H}}} | \R'\rangle \nonumber \\
+    &= \int \mathcal{D}\R''\,
+    \rho\left(\R,\R'';\frac{\beta}{2}\right)
+    \rho\left(\R'',\R';\frac{\beta}{2}\right)
+\label{eq:rhoConvolution}
+\end{align}
+%
+where have employed the normalization condition in \eqref{eq:Norm} and
+we note that the individual density matrices are at a higher effective
+temperature: $\beta \to \beta/2 \Rightarrow T \to 2 T$. Now, returning to
+\eqref{eq:Zrho}, we can employ this convolution relation $M$ times where $M \in
+\mathbbm{Z} \gg 1$ to yield a new expression for the partition function
+%
+\begin{align}
+    \mathcal{Z}  &= \int \mathcal{D}\R\, \rho(\R,\R;\beta) \nonumber \\
+                 &= \int \mathcal{D}\R_0 \cdots \int \mathcal{D}\R_{M-1}\,
+    \rho\left(\R_0,\R_{1};\frac{\beta}{M}\right) \cdots
+    \rho\left(\R_{M-1},\R_{0};\frac{\beta}{M}\right)
+    \label{eq:Zconvolution}
+\end{align}
+%
+where we have introduced the new notation
+%
+\begin{equation}
+    |\R_\alpha\rangle \equiv |\vec{r}_{1,\alpha}, \cdots, \vec{r}_{N,\alpha}
+    \rangle.
+\end{equation}
+%
+Until now, we have not specified the symmetry of the particles, but for the
+duration of these notes we will consider systems of identical bosons and thus
+we can write \eqref{eq:Zconvolution} in a more compact form:
+%
+\begin{align}
+    \mathcal{Z}  &= \frac{1}{N!}\sum_{\mathcal{P}} 
+    \prod_{\alpha=0}^{M-1}\int \mathcal{D}\R_\alpha\,
+    \rho\left(\R_\alpha,\R_{\alpha+1};\frac{\beta}{M}\right)
+    \label{eq:Zpermute}
+\end{align}
+%
+where the sum is over all permutations $\mathcal{P}$ of the fictitious particle
+labels $i$, and we require
+%
+\begin{equation}
+    |\R_M\rangle = \hat{\mathcal{P}} |\R_0\rangle =
+    \left|\vec{r}_{\mathcal{P}(1),0}, \cdots \vec{r}_{\mathcal{P}(N),0} \right \rangle
+\end{equation}
+%
+to ensure the trace is non-zero.
+
+Upon closer examination of the individual terms in the product, we may notice:
+%
+\begin{equation}
+    \langle \R_\alpha | \e{-\frac{\beta}{2}\hat{\mathcal{H}}} | R_{\alpha+1}
+    \rangle = 
+    \langle \R_\alpha | \hat{\mathcal{U}}\left(-i \hbar \frac{\beta}{M}\right) | R_{\alpha+1}
+    \rangle 
+\end{equation}
+%
+where 
+%
+\begin{equation}
+    \hat{\mathcal{U}} \equiv \e{-\frac{i t}{\hbar} \hat{\mathcal{H}}}
+\end{equation}
+%
+is the unitary time evolution operator of single particle quantum mechanics.
+Through the definition:
+%
+\begin{equation}
+t = - i \hbar \tau
+\end{equation}
+%
+where 
+%
+\begin{equation}
+    \tau \equiv \frac{\beta}{M}
+\end{equation}
+%
+we may identify \eqref{eq:Zpermute} as the partition function of a $N$
+particle system which evolves in an \emph{imaginary time} direction. The
+configurations of our system now correspond to $M$ discrete classical configurations
+corresponding to the positions of the $N$ particles:
+$|\vec{r}_{0,\alpha},\cdots,\vec{r}_{N,\alpha}\rangle$ where adjacent configurations
+in imaginary time at $\alpha \tau$ and $(\alpha+1)\tau$ are connected via an
+insertion of the short-imaginary-time propagator 
+\begin{align*}
+    \rho(\R_\alpha,\R_{\alpha+1};\tau) 
+    &= \langle \R_\alpha| \e{-\frac{\beta}{2}\hat{\mathcal{H}}} | R_{\alpha+1} \rangle 
+     \\ 
+     &= \langle \R_\alpha| \hat{\mathcal{U}}(-i \hbar \tau) | R_{\alpha+1} \rangle.
+\end{align*}
+This is simply a re-statement of the discrete Feynman path integral
+formulation of quantum statistical mechanics \cite{feynman1965quantum}, or
+equivalently the quantum-classical mapping, which says that a $d$-dimensional
+quantum system can be represented as a $(d+1)$-dimensional classical system,
+where the extra $(+1)^{th}$ dimension is potentially subject to an additional
+boundary condition.
+
+% -------------------------
+\subsection{Configurations}
+
+We are now ready to unambiguously identify the configurations that will be
+sampled in our Monte Carlo. For a system of $N$ particles, they will consist of
+$N$ discrete \emph{worldlines} as shown in Figure~\ref{fig:config}
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.75\columnwidth]{Figures/worldlines.pdf}
+\end{center}
+\caption{A sample configuration $N=4$ particles in $d$ spatial dimensions ($d=1$
+here) where we have chosen $M=8$ such that $\tau = \beta/8$. The actual
+spatial positions of the particles are identical in panels (a) and (b),
+however they differ by a reconnection between imaginary times $2\tau$ and $3\tau$
+corresponding to a permutation of the particle labels $|R_8\rangle_\mathrm{a} =
+|R_0\rangle = |\vec{r}_{1,0},\vec{r}_{2,0},\vec{r}_{3,0},\vec{r}_{4,0}\rangle$
+while $|R_8\rangle_\mathrm{b} =
+\hat{\mathcal{P}}|R_0\rangle =
+|\vec{r}_{1,0},\vec{r}_{3,0},\vec{r}_{2,0},\vec{r}_{4,0}\rangle$.}
+\label{fig:config}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+
+
+
 
 
 \bibliographystyle{apsrev4-1}
