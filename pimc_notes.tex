@@ -24,16 +24,17 @@ Continuum}
 \date{\today}
 \maketitle
 
-% ---------------------------------------------------------------------------------
-\section{Expectation Values and the Partition Function}
-% ---------------------------------------------------------------------------------
-
 The goal of these lecture notes will be to describe a stochastically exact
 quantum Monte Carlo method for computing the expectation value of observables
 for systems of interacting particles in the spatial continuum described by a
-Hamiltonian $\hat{\mathcal{H}}$ which conserves particle number.  The latest
-version can always be found online at
-\url{https://github.com/agdelma/pimc-notes}.
+Hamiltonian  which conserves particle number.  The latest
+version of the notes can always be found online at
+\url{https://github.com/agdelma/pimc-notes} while instructions on how to obtain
+and install our groups continuous space worm algorithm code are located at
+\url{http://code.delmaestro.org}.
+
+\section{Expectation Values and the Partition Function}
+%======================================================
 
 We begin with the general definition for the expectation value of some operator
 $\hat{\mathcal{O}}$ in terms of a trace over configurations
@@ -45,7 +46,7 @@ $\hat{\mathcal{O}}$ in terms of a trace over configurations
 \end{equation}
 %
 where $\beta = 1/k_{\mathrm{B}}T$ with $k_{\mathrm{B}}$ the Boltzmann constant
-and the partition function $Z$ is given by
+and the partition function $\mathcal{Z}$ is given by
 %
 \begin{equation}
     \mathcal{Z} = \mathrm{Tr}\,\e{-\beta \hat{\mathcal{H}}} 
@@ -61,22 +62,26 @@ where
 %
 is the density matrix.  In order to compute the trace in
 \eqref{eq:partitionFunction} for a given system described by Hamiltonian
-$\mathcal{H}$ we need to identify a set of convenient basis states
-$|\alpha\rangle$ that can be efficiently sampled allowing us to write the
+$\hat{\mathcal{H}}$ we need to identify a set of convenient basis states
+$|\gamma\rangle$ that can be efficiently sampled allowing us to write the
 partition function as the direct sum 
 %
-\begin{equation}
-    \mathcal{Z} =  \sum_{\alpha}\langle \alpha | \e{-\beta \hat{\mathcal{H}}}
-    |\alpha \rangle.
-\end{equation}
+\begin{align}
+    \mathcal{Z} &=  \sum_{\gamma}\langle \gamma | \e{-\beta \hat{\mathcal{H}}}
+    |\gamma \rangle \nonumber \\
+    &\approx \sum_{\gamma} W(\gamma)
+\end{align}
 %
-In the next section we will introduce the specific form of $|\alpha\rangle$
-in terms of the spatial positions of interacting particles.
+where $W(\gamma)$ is a positive real weight corresponding to configuration
+state $|\gamma\rangle$.  In the next section we will introduce the specific
+form of $|\gamma\rangle$ in terms of the spatial positions of interacting
+particles and describe a method for computing the partition function as a sum
+of weights.
 
-% ---------------------------------------------------------------------------------
 \section{Path Integral Monte Carlo}
-% ---------------------------------------------------------------------------------
-The path-integral Monte Carlo method was first introduced by Ceperley, and a
+%==================================
+
+The path-integral Monte Carlo method was first introduced by David Ceperley, and a
 comprehensive review can be found in Ref.~[\onlinecite{Ceperley:1995gr}]. Here
 we will attempt to provide an introduction to the method with sufficient
 details to allow for the creation of a simple code.
@@ -100,12 +105,13 @@ only depends on the position of a single particle, while the two-body
 interaction potential $U(\vec{r}_i-\vec{r}_j)$ is in general a function of the
 vector displacement between them.  We will most often work with spherically
 symmetric interaction potentials such that $U(\vec{r}_i - \vec{r}_j) =
-U(|\vec{r}_i-\vec{r}_j|)$. A physical system of interest could include trapped
+U(|\vec{r}_i-\vec{r}_j|)$ and we will neglect all self-interactions:
+$\hat{U}_{ii} = 0$. A physical system of interest could include trapped
 ultra-cold atoms, where $V(\vec{r}_i) \sim |\vec{r}_i|^2$ is a harmonic
 trapping potential and the particles interact via an induced dipole-dipole
 interaction $U(\vec{r}_i - \vec{r}_j) \sim |\vec{r}_i-\vec{r}_j|^{-3}$.
 
-The most natural basis states $|\alpha\rangle$ in this case are just a
+The most natural basis states $|\gamma\rangle$ in this case are just a
 collection of the spatial locations of the $N$ particles, where in the case of
 identical particles, the labels are fictitious. We will employ the convenient
 short-hand notation 
@@ -164,7 +170,7 @@ expression for $\rho(\R,\R';\beta)$ we can write the partition function:
 As we have defined the potential operator $\hat{\mathcal{V}}$ to be diagonal in
 the position basis, it would be extremely convenient if we could decompose the
 density matrix into a product of terms containing $\hat{\mathcal{T}}$ and
-$\hat{\mathcal{V}}$ However, we know that
+$\hat{\mathcal{V}}$.  However, we know that
 $[\hat{\mathcal{T}},\hat{\mathcal{V}}] \ne 0$ and thus
 %
 \begin{align}
@@ -201,7 +207,7 @@ $[\hat{\mathcal{H}},\hat{\mathcal{H}}] = 0$ thus
 \end{align}
 %
 In the position basis, this corresponds to the elements of the density matrix
-satisfying the following convolution relation
+satisfying a convolution relation
 %
 \begin{align}
     \rho(\R,\R';\beta) &=  \langle \R | \e{-\beta \hat{\mathcal{H}}} | \R'\rangle \nonumber \\
@@ -261,17 +267,17 @@ to ensure the trace is non-zero.
 Upon closer examination of the individual terms in the product, we may notice:
 %
 \begin{equation}
-    \langle \R_\alpha | \e{-\frac{\beta}{2}\hat{\mathcal{H}}} | R_{\alpha+1}
+    \langle \R_\alpha | \e{-\frac{\beta}{2}\hat{\mathcal{H}}} | \R_{\alpha+1}
     \rangle = 
     \left \langle \R_\alpha \left | \hat{\mathcal{U}}\left(-i \hbar
-    \frac{\beta}{M}\right) \right | R_{\alpha+1}
+    \frac{\beta}{M}\right) \right | \R_{\alpha+1}
     \right \rangle 
 \end{equation}
 %
 where 
 %
 \begin{equation}
-    \hat{\mathcal{U}} \equiv \e{-{i t} \hat{\mathcal{H}}/\hbar}
+    \hat{\mathcal{U}}(t) \equiv \e{-{i t} \hat{\mathcal{H}}/\hbar}
 \end{equation}
 %
 is the unitary time evolution operator of single particle quantum mechanics.
@@ -291,14 +297,14 @@ we may identify \eqref{eq:Zpermute} as the partition function of a $N$
 particle system which evolves in an \emph{imaginary time} direction. The
 configurations of our system now correspond to $M$ discrete classical configurations
 corresponding to the positions of the $N$ particles:
-$|\vec{r}_{0,\alpha},\cdots,\vec{r}_{N,\alpha}\rangle$ where adjacent configurations
+$|\vec{r}_{1,\alpha},\cdots,\vec{r}_{N,\alpha}\rangle$ where adjacent configurations
 in imaginary time at $\alpha \tau$ and $(\alpha+1)\tau$ are connected via an
 insertion of the short-imaginary-time propagator 
 \begin{align*}
     \rho(\R_\alpha,\R_{\alpha+1};\tau) 
-    &= \langle \R_\alpha| \e{-\frac{\beta}{2}\hat{\mathcal{H}}} | R_{\alpha+1} \rangle 
+    &= \langle \R_\alpha| \e{-\frac{\beta}{2}\hat{\mathcal{H}}} | \R_{\alpha+1} \rangle 
      \\ 
-     &= \langle \R_\alpha| \hat{\mathcal{U}}(-i \hbar \tau) | R_{\alpha+1} \rangle.
+     &= \langle \R_\alpha| \hat{\mathcal{U}}(-i \hbar \tau) | \R_{\alpha+1} \rangle.
 \end{align*}
 This is simply a re-statement of the discrete Feynman path integral
 formulation of quantum statistical mechanics \cite{feynman1965quantum}, or
@@ -307,8 +313,8 @@ quantum system can be represented as a $(d+1)$-dimensional classical system,
 where the extra $(+1)^{th}$ dimension is potentially subject to an additional
 boundary condition.
 
-% -------------------------
 \subsection{Configurations}
+%--------------------------
 \label{sec:configurations}
 
 We are now ready to unambiguously identify the configurations that will be
@@ -338,14 +344,15 @@ spatial positions of the particles at a given imaginary time slice and a set of
 links which connect them and define a permutation of particle labels.  Thus,
 the primary data structures used to store the configurations of the system
 include a $d \times N \times M$ tensor for the positions and a $2 \times N
-\times M$ tensor for the links.
+\times M$ tensor for the links allowing for the identification of any bead
+$\vec{r}_{i,\alpha}$ and its imaginary time neighbor at $\vec{r}_{i,\alpha+1}$.
 
 Motivated by the imaginary time boundary condition $|\R_M\rangle =
 \hat{\mathcal{P}}|\R_0\rangle$, Chandler and Wolynes \cite{Chandler:1981gz}
 introduced an alternative way to think about the worldlines in terms of an
 isomorphism to classical ``ring polymers''.  Under the identity permutation,
 these polymers consist of $M$ beads, but as permutations take place, the number
-of beads can grow to some $n M$ where $n \le N$. This can be most easily
+of beads can grow to some $n M$ where $1 \le n \le N$. This can be most easily
 visualized in two spatial dimensions as shown in Figure~\ref{fig:polymers}.
 %
 % ---------------------------------------------------------------------------------
@@ -375,8 +382,8 @@ We can now make a number of important observations:
     fraction.
 \end{enumerate}
 
-% -------------------------
 \subsection{Weights}
+%-------------------
 Now that we have identified our configurations, in order to devise a sampling
 scheme we must return to the partition function in \eqref{eq:Zpermute} and
 attempt to compute the weights.  Our construction thus far has been
@@ -387,7 +394,7 @@ amplitude:
 %
 \begin{align}
 \rho(\R_\alpha, \R_{\alpha+1}; \tau) &= \langle \R_\alpha | \e{-\tau(\hat{T} +
-\hat{V})}|R_{\alpha+1}\rangle
+\hat{V})}|\R_{\alpha+1}\rangle
 \end{align}
 %
 where we can now ignore the fact that $[\hat{\mathcal{T}},\hat{\mathcal{V}}]
@@ -395,7 +402,7 @@ where we can now ignore the fact that $[\hat{\mathcal{T}},\hat{\mathcal{V}}]
 \emph{Primitive Approximation} and the error can be made arbitrarily small at a
 given temperature at the linear cost of increasing $M$.  In practice, we can
 utilize various schemes to drastically improve the error by explicitly
-evaluating the commutator that appears in \eqref{eq:BCH} and in general we
+evaluating the commutator that appears in \eqref{eq:BCH} and we have chosen to 
 employ a fourth order scheme called the generalized Suzuki factorization
 \cite{Jang:2001cl}. For the purposes of these lecture notes, the primitive
 approximation will be sufficient to illustrate all concepts and we can write
@@ -405,7 +412,7 @@ approximation will be sufficient to illustrate all concepts and we can write
     \e{-\tau\hat{\mathcal{T}}} \e{-\tau\hat{\mathcal{V}})}|R_{\alpha+1}\rangle + \mathrm{O}(\tau^2)
 \nonumber \\
 &= \int \mathcal{D}\R'\, \langle \R_\alpha | 
-\e{-\tau\hat{\T}}|\R'\rangle \langle \R' | \e{-\tau\hat{\mathcal{V}})}|R_{\alpha+1}\rangle 
+\e{-\tau\hat{\T}}|\R'\rangle \langle \R' | \e{-\tau\hat{\mathcal{V}})}|\R_{\alpha+1}\rangle 
 \nonumber \\
 &= \int \mathcal{D}\R'\, \langle \R_\alpha | 
 \e{-\tau\hat{\T}}|\R'\rangle \langle \R' |\R_{\alpha+1}\rangle \e{-\tau
@@ -421,7 +428,7 @@ approximation will be sufficient to illustrate all concepts and we can write
 where we have inserted a complete set of states in line 2 and utilized the fact
 that the potential energy operator is diagonal in imaginary time. We have
 introduced a slight abuse of the set notation
-$\R = \{\vec{r}_1, \cdots, \vec{r}_N \}$ where for example the Dirac delta
+$\R = \{\vec{r}_1, \cdots, \vec{r}_N \}$ where, for example, the Dirac delta
 function is understood to mean
 %
 \begin{equation}
@@ -485,7 +492,8 @@ notation as
 \label{eq:rho0}
 \end{align}
 %
-We may now insert our complete expression for the primitive propagator
+We may now insert our complete expression for the primitive imaginary time
+propagator
 %
 \begin{equation}
     \rho(\R_\alpha,\R_{\alpha+1};\tau) = \rho_0(\R_\alpha,\R_{\alpha+1};\tau)
@@ -518,24 +526,26 @@ partition function is then just a ``path'' integral over all
 possible configurations and permutations of particle worldlines where the
 weight of each configuration is just the exponentiated effective action.
 
-% -------------------------
 \subsection{Updates}
+%-------------------
 In order to sample configurations we must devise a series of updates that can
 be proposed and accepted or rejected based on their weights.  We are aided by
 the fact that it is possible to exactly sample the free density matrix
 $\rho_0(\R,\R';\tau)$ since it is just a product of Gaussians.  This will allow
 us to sample the kinetic part of the action in the ensemble and only consider
 the potential action in the weights. We will outline two types of simple updates,
-center-of-mass and staging moves, that are depicted schematically in
-Figure~\ref{fig:pimcMoves}.
+center-of-mass and staging moves, and briefly discuss a third permutation move
+that will present us with a difficult challenge.
+%that are depicted schematically in Figure~\ref{fig:pimcMoves}.
 
 
 \subsubsection{Center of Mass}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A center-of-mass update involves the spatial translation of an entire
 worldline, leaving the kinetic part of the action unchanged.  It proceeds as
 follows:
 \begin{enumerate}
-    \item Choose a single worldline $i \in \{1,\ldots,N\}$ with beads located
+    \item Choose a random integer $i \in [0,N-1]$ fixing worldline $i$ with beads located
         at $\vec{r}_{i,\alpha}$.
     \item Generate uniformly distributed random numbers, $\Delta_a$, where
         $a=1,\ldots,d$ on $(-\delta/2,\delta/2)$ where $\delta$ is a small number that can be
@@ -561,14 +571,16 @@ where
 \end{enumerate}
 
 \subsubsection{Staging}
+%~~~~~~~~~~~~~~~~~~~~~~
 A staging update \cite{Sprik:1985bz} generates a new section of path between two fixed beads at time
 slices $\alpha$ and $\alpha+m$ where $m < M$.
 
 \subsubsection{Permutation Sampling}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We now address the point of how one can sample the sum over permutations of
-particle labels in Eq.~\ref{eq:primitiveZ}. This is an onerous task, as for $N$
+particle labels in \eqref{eq:primitiveZ}. This is an onerous task, as for $N$
 particles there are $N!$ possible permutations.  Historically this problem was
-addressed in a brute force manner, but explicitly sampling all possible
+addressed in a brute force manner, by explicitly sampling all possible
 reconnections of worldlines, however this limited the total number of
 particles that could be efficiently simulated at low temperature to $N \sim
 100$. In 2006, Boninsegni, Prokof'ev and Svistunov introduced a generalization
@@ -577,15 +589,15 @@ of a previous path integral based lattice quantum Monte Carlo scheme
 \emph{worm} algorithm \cite{Boninsegni:2006ed,Boninsegni:2006gc}.
 
 
-% ---------------------------------------------------------------------------------
 \section{Continuous Space Worm Algorithm}
+%========================================
 
 The worm algorithm \cite{Boninsegni:2006ed,Boninsegni:2006gc} (WA) solves the following two problems:
 \begin{enumerate}
     \item Generalizes the configuration space to allow for simulations of
         interacting particles in the spatial continuum in the grand canonical
-        ensemble
-    \item Solves the ``permutation'' problem by allowing for the sampling of
+        ensemble.
+    \item Solves the permutation problem by allowing for the sampling of
         topologically inequivalent winding sectors using only local updates.
 \end{enumerate}
 This is accomplished by extending the configuration space of worldlines
@@ -597,9 +609,319 @@ as
 %
 \begin{equation}
     \mathcal{Z}_W = \sum_{N=0}^{\infty} \mathcal{Z}(N) \e{\beta \mu N} + C
-\sum_{\alpha_h,\alpha_t} \int d\vec{r}
+    \sum_{\alpha_h,\alpha_t} \int d\vec{r}_h \int d\vec{r}_t\,
+    g\left(\vec{r}_h,\vec{r}_t; \alpha_h\tau-\alpha_t \tau\right)
 \end{equation}
 %
+where $\mu$ is the grand canonical chemical potential,
+$g(\vec{r},\vec{r'};\tau-\tau')$ is (up to a normalization constant)
+equal to the single particle Matsubara Green function
+%
+\begin{equation}
+g(\vec{r},\vec{r'};\tau-\tau') \equiv \mathcal{Z}\left \langle 
+\hat{\mathsf{T}}_\tau \hat{\psi}(\vec{r},\tau)\hat{\psi}^\dagger(\vec{r}',\tau')
+\right \rangle
+\end{equation}
+%
+and $\hat{\mathsf{T}}_\tau$ is the imaginary time ordering operator. Working
+in this extended ensemble is trivial, as we just allow for configurations with
+open worldlines.  Such configurations are unphysical however, and we only make
+measurements when there are no worms present in the simulation. We refer to the 
+configurations of $\mathcal{Z}(N)$ as \emph{diagonal}, while those containing
+worms are \emph{off-diagonal}. The numerical constant $C$ is of order one and
+can be tuned to change the relative amount of Monte Carlo time spent in each
+ensemble. 
+
+\subsection{Worm Updates}
+%-------------------
+The worm updates come in complimentary pairs that satisfy detailed balance
+together except for the \emph{swap} update, which provides the solution to the
+permutation sampling problem described above. Much of the notation in this
+section is taken directly from the original papers in
+Refs.~[\onlinecite{Boninsegni:2006ed}] and [\onlinecite{Boninsegni:2006gc}].
+In the following descriptions, when moving along worldlines, all addition of
+time slices is understood to be performed modulo $M$ subject to the constraint
+that $\{\vec{r}_{1,0},\ldots,\vec{r}_{N,0}\} = 
+\{\vec{r}_{{\mathcal{P}}(1),M},\ldots,\vec{r}_{{\mathcal{P}}(N),0}\}$.
+
+\subsubsection{Open/Close}
+%~~~~~~~~~~~~~~~~~~~~~~~~~
+An \emph{open} update moves the ensemble from diagonal to off-diagonal, and can
+only be attempted when there are no worms present.  It proceeds as follows:
+
+\begin{enumerate}
+    \item Choose a random integer $i \in [0,N-1]$ fixing worldline $i$ with beads located
+        at $\vec{r}_{i,\alpha}$.
+    \item Generate a random integer $\alpha_h \in [0,M-1]$; this
+        will be the location of the head of the proposed worm.
+    \item Generate a random integer $m \in [0,\overline{m}-1]$ where $\overline{m} <
+        M$ is a parameter to be optimized. Starting at time slice $\alpha_h$,
+        find $\alpha_t = \alpha_h + m$, which will be the time slice of the tail.
+    \item Remove the set of $m-1$ beads
+        $\{\vec{r}_{i,\alpha_h+1},\ldots,
+    \vec{r}_{,\alpha_h+m-1}\}$ where the addition is
+    understood to be modulo $M$ subject to the imaginary time boundary
+    condition $\vec{r}_{i,M} = \vec{r}_{\mathcal{P}(i),0}$ for a given
+    permutation of particle labels.
+\item Accept the move with probability
+    %
+\begin{equation}
+P_{\text{open}} = \mathrm{min}\left[1, 
+    \frac{C \overline{m} M N}{\rho_0(\vec{r}_{i,\alpha_h},\vec{r}_{i,\alpha_t};m\tau)}
+\e{-\tau \Delta \mathcal{V} - \mu m \tau} \right]
+\end{equation}
+%
+where $\Delta \mathcal{V}$ indicates the change in the total potential action,
+which in this case is
+%
+\begin{equation}
+    \Delta\mathcal{V} = -\sum_{\alpha=\alpha_h+1}^{\alpha_h+m-1} \left[ 
+        V(\vec{r}_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^N
+        U(\vec{r}_{i,\alpha}-\vec{r}_{j,\alpha}) \right]
+\end{equation}
+%
+and $\rho_0$ is the free particle propagator in \eqref{eq:rho0}.
+\end{enumerate}
+If the move is accepted, the configuration now contains $N \to N-1$ physical
+particles and 1 worm.\\[2ex]
+
+\noindent
+The \emph{close} move provides a detailed balance compliment to \emph{open} and
+moves the ensemble from off-diagonal back to diagonal. It is only possible when
+a worm and $N$ particles are present and contains the following steps:
+\begin{enumerate}
+    \item Identify the ``particle'' label $i$ of the worm and the integer number of time steps, $m$ between $\alpha_h$ and
+        $\alpha_\tau$ between the head and tail where we assume $\alpha_h > \alpha_t$ modulo $M$.
+\item If $m=0$ or $m\ge \overline{m}$ reject the move immediately.
+\item Otherwise, generate a new partial worldline containing $m-1$ particle positions connecting 
+    $\vec{r}_{i,\alpha_h}$ and $\vec{r}_{i,\alpha_t}$: $\{\vec{r}'_{i,\alpha_h+1},\ldots,
+    \vec{r}'_{,\alpha_h+m-1}\}$ where the individual positions are sampled from
+    the product of $m$ free particle propagators
+    $\prod_{\alpha=\alpha_h}^{\alpha_h+m-1}
+    \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau)$.
+\item Accept the move with probability
+    %
+\begin{equation}
+    P_{\text{close}} = \mathrm{min} \left[1,
+        \frac{\rho_0(\vec{r}_{i,\alpha_h},\vec{r}_{i,\alpha_t}; m \tau)}{C
+    \overline{m}M (N+1)} \e{-\tau \Delta \mathcal{V} + \mu m \tau} \right]
+\end{equation}
+%
+where
+%
+\begin{equation}
+    \Delta\mathcal{V} = \sum_{\alpha=\alpha_h+1}^{\alpha_h+m-1} \left[ 
+        V(\vec{r}'_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^N
+        U(\vec{r}'_{i,\alpha}-\vec{r}_{j,\alpha}) \right].
+\end{equation}
+%
+\end{enumerate}
+If the move is accepted, we are now in a configuration with $N \to N+1$
+particles and no worms.
+
+\subsubsection{Insert/Remove}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An \emph{insert} move involves the addition to the ensemble of an entire worm
+and moves the configuration from diagonal to off-diagonal.  It is only possible
+if there are no worms present in the system and proceeds as follows:
+\begin{enumerate}
+    \item Choose a random integer $\alpha_t \in [0,M-1]$; this will be the
+        location of the worm tail.
+    \item Choose a random integer $m \in [0,\overline{m}-1]$, this will be the
+        length of the worm.
+    \item Randomly choose a position inside the simulation cell of volume $V$
+        and label it $\vec{r}'_{i,\alpha_t}$ where $i$ is the particle label of
+        the proposed worm.
+    \item Generate a new partial worldline containing $m-1$ particle positions
+        starting at position $\vec{r}'_{i,\alpha_t}$: $\{\vec{r}'_{i,\alpha_t+1},\ldots,
+    \vec{r}'_{,\alpha_t+m}\}$ where the individual positions are sampled from
+    the product of $m$ free particle propagators
+    $\prod_{\alpha=\alpha_t}^{\alpha_t+m-1}
+    \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau)$.
+\item Accept the move with probability
+    %
+\begin{equation}
+    P_{\text{insert}} = \mathrm{min} \left[1,
+C V \overline{m}M \e{-\tau \Delta \mathcal{V} + \mu m \tau} \right]
+\end{equation}
+%
+where
+%
+\begin{equation}
+    \Delta\mathcal{V} = \sum_{\alpha=\alpha_t}^{\alpha_t+m} \left[ 
+        V(\vec{r}'_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^N
+        U(\vec{r}'_{i,\alpha}-\vec{r}_{j,\alpha}) \right].
+\end{equation}
+%
+\end{enumerate}
+If the move is accepted, the simulation cell will contain $N$ particles and 1
+worm.\\[2ex]
+
+\noindent
+The \emph{remove} update deletes a worm from the configuration, moving the
+ensemble from off-diagonal to diagonal. It is only possible if there is a worm
+present and is undertaken as follows:
+\begin{enumerate}
+    \item Find the particle label of the worm, call it $i$, and the positions
+        of the head and tail: $\vec{r}_{i,\alpha_h}$ and
+        $\vec{r}_{i,\alpha_h}$.
+    \item Determine $m = \alpha_h - \alpha_t$, the length of the worm.
+    \item If $m > \overline{m}$ reject the move.
+    \item Otherwise, delete the set of $m$ beads $\{\vec{r}_{i,\alpha_t},\ldots,
+    \vec{r}'_{,\alpha_t+m}\}$.
+\item Accept the move with probability
+    %
+\begin{equation}
+    P_{\text{remove}} = \mathrm{min} \left[1,
+    \frac{1}{C V \overline{m}M} \e{-\tau \Delta \mathcal{V} - \mu m \tau} \right]
+\end{equation}
+%
+where
+%
+\begin{equation}
+    \Delta\mathcal{V} = -\sum_{\alpha=\alpha_t}^{\alpha_t+m} \left[ 
+        V(\vec{r}_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^N
+        U(\vec{r}_{i,\alpha}-\vec{r}_{j,\alpha}) \right].
+\end{equation}
+%
+\end{enumerate}
+If the move is accepted, the simulation cell will contain $N$ particles and 0
+worms.
+
+\subsubsection{Advance/Recede}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The \emph{advance} and \emph{recede} updates do not change the nature of the
+ensemble and operate only in the off-diagonal case in the presence of a worm.
+For advance:
+\begin{enumerate}
+    \item Determine the time slice $\alpha_h$ and spatial location
+        $\vec{r}_{i,\alpha_h}$ of the worm head.
+    \item Choose a random integer $m \in [0,\overline{m}-1]$.
+    \item Generate a partial worldline composed of the set of new particle positions 
+        $\{\vec{r}'_{i,\alpha_h+1},\ldots, \vec{r}'_{i,\alpha_h+m}\}$ which are
+        sampled from $\prod_{\alpha=\alpha_h}^{\alpha_h+m-1}
+    \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau)$.
+\item Accept the move with probability
+    %
+\begin{equation}
+    P_{\text{advance}} = \mathrm{min} \left[1,
+    \e{-\tau \Delta \mathcal{V} + \mu m \tau} \right]
+\end{equation}
+%
+where
+%
+\begin{equation}
+    \Delta\mathcal{V} = \sum_{\alpha=\alpha_t+1}^{\alpha_t+m} \left[ 
+        V(\vec{r}'_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^N
+        U(\vec{r}'_{i,\alpha}-\vec{r}_{j,\alpha}) \right].
+\end{equation}
+%
+\end{enumerate}
+
+\noindent
+For recede:
+\begin{enumerate}
+    \item Determine the time slice $\alpha_h$ and spatial location
+        $\vec{r}_{i,\alpha_h}$ of the worm head.
+    \item Choose a random integer $m \in [0,\overline{m}-1]$.
+    \item Delete the partial worldline containing the set of particle coordinates: 
+        $\{\vec{r}_{i,\alpha_h-(m-1)},\ldots, \vec{r}_{i,\alpha_h}\}$.
+\item Accept the move with probability
+    %
+\begin{equation}
+    P_{\text{recede}} = \mathrm{min} \left[1,
+    \e{-\tau \Delta \mathcal{V} - \mu m \tau} \right]
+\end{equation}
+%
+where
+%
+\begin{equation}
+    \Delta\mathcal{V} = -\sum_{\alpha=\alpha_h-(m-1)}^{\alpha_h} \left[ 
+        V(\vec{r}'_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^N
+        U(\vec{r}'_{i,\alpha}-\vec{r}_{j,\alpha}) \right].
+\end{equation}
+%
+\end{enumerate}
+We note that similar copies of these updates could also be performed at the
+tail of the worm, but such moves should be unnecessary for ergodicity in the presence of
+imaginary time translation symmetry.
+
+\subsubsection{Swap}
+%~~~~~~~~~~~~~~~~~~~
+The \emph{swap} update is behind the huge speedup inherent in the worm
+algorithm, as it allows us to sample different topological winding sectors
+(permutations) using only local updates.  It does not, therefore, suffer from
+the horrendous $N!$ scaling of brute-force permutation sampling. It only
+operates on off-diagonal configurations, in the presence of a worm, and does
+not change the ensemble. It provides a method by which a single worm grows by
+$n M$ time slices where $1 \le n \le N$ by ``swapping'' its head with a
+proximate unbroken particle worldline.  To perform a swap move:
+\begin{enumerate}
+    \item Determine the time slice $\alpha_h$ and spatial location
+        $\vec{r}_{i,\alpha_h}$ of the worm head.
+    \item Advance to the time slice of the \emph{pivot} bead $\alpha_p =
+        \alpha_h + \overline{m}$ where the addition is modulo $M$ and find the
+        set of all beads $\ell_p \equiv \{\vec{r}_{k,\alpha_p}\}$ such that
+        $|\vec{r}_{i,\alpha_h} - \vec{r}_{k,\alpha_p}| < R$ where $R \in
+        \mathbbm{R}$ is a simulation parameter to be optimized.
+\item Use tower sampling to select a single bead $\vec{r}_{j,\alpha_p} \in
+    \{\vec{r}_{k,\alpha_p}\}$ from the list with probability
+    %
+\begin{equation}
+    P_p = \frac{1}{\Sigma_p}
+    \rho_0(\vec{r}_{i,\alpha_h},\vec{r}_{j,\alpha_p};\overline{m}\tau)
+\end{equation}
+%
+where the normalization factor is
+%
+\begin{equation}
+\Sigma_p = \sum_{\vec{r}\in\ell_p} 
+    \rho_0(\vec{r}_{i,\alpha_h},\vec{r};\overline{m}\tau).
+\end{equation}
+%
+\item Recede $\overline{m}$ time steps along worldline $j$ from $\alpha_p$ to
+    identify the \emph{swap} bead at $\alpha_s = \alpha_h =
+    \alpha_p-\overline{m}$: $\vec{r}_{j,\alpha_s}$. If the tail of the worm,
+    $\vec{r}_{i,\alpha_t}$, is encountered during this process, immediately reject the move.
+\item If $|\vec{r}_{j,\alpha_p} - \vec{r}_{j,\alpha_s}| \ge R$ reject the move.
+\item Otherwise, create a second list $\ell_s \equiv \{\vec{r}_{k,\alpha_s}\}$ such
+    that $|\vec{r}_{j,\alpha_s} - \vec{r}_{k,\alpha_p}| < R$ and form the sum
+    %
+\begin{equation}
+\Sigma_s = \sum_{\vec{r}\in\ell_s} 
+    \rho_0(\vec{r}_{j,\alpha_p},\vec{r};\overline{m}\tau).
+\end{equation}
+%
+\item Delete the set of $\overline{m}-1$ beads
+    $\{\vec{r}_{j,\alpha_s+1},\ldots,\vec{r}_{j,\alpha_s+m-1} \}$.
+\item Construct a new partial worldline containing the set of particle
+    positions $\{\vec{r}'_{i,\alpha_h+1},\ldots \vec{r}'_{i,\alpha_h+m-1}\}$
+    connecting $\vec{r}_{i,\alpha_h}$ and $\vec{r}_{j,\alpha_p}$ sampled from
+    the product of $\overline{m}$ free particle propagators
+    $\prod_{\alpha=\alpha_h}^{\alpha_h+m-1}
+    \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau)$ where
+    $\vec{r}_{i,\alpha_h + m} = \vec{r}_{j,\alpha_p}$.
+\item The head of the worm is now located at $\vec{r}_{j,\alpha_s}$ and its
+    length has increased by the number of time slices contained in the 
+    particle that was labeled by $j$.
+\item Accept the move with probability
+    %
+\begin{equation}
+    P_{\text{swap}} = \mathrm{min}\left[1,
+        \frac{\Sigma_p}{\Sigma_s} \e{-\tau\Delta{\mathcal{V}}}
+    \right]
+\end{equation}
+%
+where 
+\begin{equation}
+    \Delta\mathcal{V} = \sum_{\alpha=\alpha_h}^{\alpha_h+\overline{m}} \left\{ 
+        V(\vec{r}'_{i,\alpha}) - V(\vec{r}_{j,\alpha}) + \frac{1}{2}\sum_{k=1}^N
+        \left[ U(\vec{r}'_{i,\alpha}-\vec{r}_{k,\alpha}) -
+    U(\vec{r}_{j,\alpha}-\vec{r}_{k,\alpha})\right] \right\}.
+\end{equation}
+%
+\end{enumerate}
+
 
 
 
