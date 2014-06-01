@@ -29,8 +29,8 @@ quantum Monte Carlo method for computing the expectation value of observables
 for systems of interacting particles in the spatial continuum described by a
 Hamiltonian  which conserves particle number.  The latest
 version of the notes can always be found online at
-\url{https://github.com/agdelma/pimc-notes} while instructions on how to obtain
-and install our groups continuous space worm algorithm code are located at
+\url{https://github.com/agdelma/pimc-notes} while instructions on how to
+obtain, install and run our groups continuous space worm algorithm code are located at
 \url{http://code.delmaestro.org}.
 
 \section{Expectation Values and the Partition Function}
@@ -573,7 +573,71 @@ where
 \subsubsection{Staging}
 %~~~~~~~~~~~~~~~~~~~~~~
 A staging update \cite{Sprik:1985bz} generates a new section of path between two fixed beads at time
-slices $\alpha$ and $\alpha+m$ where $m < M$.
+slices $\alpha$ and $\alpha+m$ where $m < M$. It utilizes the fact that the
+free particle density matrix in \eqref{eq:rho0} is Gaussian and thus obeys a
+convolution relation.  The problem is as follows:  given two known spatial
+positions (beads) on worldline $i$, say $r_{i,\alpha}$ and $r_{i,\alpha+m}$,
+how do we exactly sample the product of free particle density matrices:
+%
+\begin{equation}
+    \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau) \cdots
+    \rho_0(\vec{r}_{i,\alpha+m-1},\vec{r}_{i,\alpha+m};\tau)?
+\end{equation}
+%
+The solution comes by choosing a single term in this product and constructing
+the probability distribution for propagation to that position, constrained by the
+endpoints. Let us drop the worldline index $i$ for brevity:  
+%
+\begin{align}
+    \pi_0(\vec{r}_\gamma| \vec{r}_{\alpha},\vec{r}_{\alpha+m}) &=
+    \rho_0(\vec{r}_\alpha,\vec{r}_\gamma;(\gamma-\alpha)\tau) 
+\rho_0(\vec{r}_\gamma,\vec{r}_{\alpha+m};(\alpha+m-\gamma)\tau) \nonumber \\
+&\propto 
+\exp\left[-\frac{|\vec{r}_\gamma-\vec{r}_{\alpha}|^2}{4\lambda (\gamma-\alpha)\tau} \right]
+\exp\left[-\frac{|\vec{r}_{\alpha+m}-\vec{r}_{\gamma}|^2}{4\lambda (\alpha+m-\gamma)\tau} \right]
+\nonumber \\
+&\propto \exp\left[-\frac{|\vec{r}_\gamma-\overline{\vec{r}}_{\gamma}|^2}{2 \sigma^2}\right]
+\label{eq:pi0}
+\end{align}
+%
+where 
+%
+\begin{align}
+    \overline{\vec{r}}_\gamma &= \frac{1}{m}\left[(\alpha+m-\gamma)\vec{r}_{\alpha} +
+(\gamma-\alpha)\vec{r}_{\alpha+m}\right] \nonumber \\
+\sigma^2 &= \frac{1}{\frac{1}{(\alpha + m -\gamma)\tau} +
+\frac{1}{(\gamma-\alpha)\tau}}.
+\end{align}
+%
+As \eqref{eq:pi0} is a simple Gaussian with mean $\overline{x}_\gamma$ and
+variance $\sigma^2$, it can be exactly sampled.  We are now ready to construct
+our staging move:
+\begin{enumerate}
+    \item Choose a random integer $i \in [0,N-1]$ which fixes a worldline.
+    \item Choose a random integer $\alpha \in [0,M-1]$ such that the start of
+        the state occurs at $\vec{r}_{i,\alpha}$ and it ends at
+        $\vec{r}_{i,\alpha+\overline{m}}$, where $\overline{m}$ is an algorithm
+        parameter that can be optimized. These beads are held fixed during the update.
+    \item Using $\vec{r}_{i,\alpha}$ and $\vec{r}_{i,\alpha+\overline{m}}$ construct the
+        set of new positions
+        $\{\vec{r}'_{i,\alpha+1},\ldots,\vec{r}'_{i,\alpha+\overline{m}-1}\}$ by exactly
+        sampling \eqref{eq:pi0} for $\gamma = \alpha+1,\ldots,\alpha+m-1]$.
+    \item Accept the move with probability
+    %
+\begin{equation}
+    P_{\text{com}} = \mathrm{min} 
+    \left\{1,\e{-\tau[\mathcal{V}(\vec{r}'_i)-\mathcal{V}(\vec{r}_i)]} \right\}
+\end{equation}
+%
+where 
+%
+\begin{equation}
+    \mathcal{V}(\vec{r_i}) = \sum_{\gamma=\alpha}^{\alpha+m-1}\left[ V(\vec{r}_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^{N}
+    U(\vec{r}_{i,\gamma}-\vec{r}_{j,\gamma})\right].
+\end{equation}
+%
+\end{enumerate}
+Such a move should enjoy a reasonably high acceptance rate.
 
 \subsubsection{Permutation Sampling}
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
