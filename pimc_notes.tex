@@ -637,7 +637,7 @@ where
     \overline{\vec{r}}_\gamma &= \frac{1}{\overline{m}}
     \left[(\alpha+\overline{m}-\gamma)\vec{r}_{\alpha} +
     (\gamma-\alpha)\vec{r}_{\alpha+\overline{m}}\right] \nonumber \\
-    \sigma^2 &= \frac{1}{\frac{1}{(\alpha + \overline{m}\gamma)\tau} +
+    \sigma^2 &= \frac{2\lambda}{\frac{1}{(\alpha + \overline{m}\gamma)\tau} +
 \frac{1}{(\gamma-\alpha)\tau}}.
 \end{align}
 %
@@ -1011,22 +1011,6 @@ imaginary time translation symmetry.
 
 \subsubsection{Swap}
 %~~~~~~~~~~~~~~~~~~~
-%
-% ---------------------------------------------------------------------------------
-% \begin{figure}
-% \begin{center}
-% \includegraphics[width=0.70\columnwidth]{Figures/swap.pdf}
-% \end{center}
-% \caption{The \emph{swap} Monte Carlo update, which does not change the nature
-% of the ensemble, but allows for the sampling of different topological sectors.
-% A new partial worldline is generated between the head of the worm and a
-% neighboring particle worldline position at an advanced time slice.  The
-% original portion of the particle worldline is then erased, ``swapping'' the
-% head of the worm and increasing the imaginary time extent of the worm.}
-% \label{fig:swap}
-%  \end{figure}
-% ---------------------------------------------------------------------------------
-%
 The \emph{swap} update, shown in Figure~\ref{fig:swap} is behind the huge
 speedup inherent in the worm algorithm, as it allows us to sample different
 topological winding sectors (permutations) using only local updates.  It does
@@ -1117,16 +1101,6 @@ where
 \end{equation}
 %
 \end{enumerate}
-
-
-
-
-
-
-
-
-
-
 
 \bibliographystyle{apsrev4-1}
 \bibliography{refs}
