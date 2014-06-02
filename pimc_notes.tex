@@ -572,16 +572,19 @@ where
 
 \subsubsection{Staging}
 %~~~~~~~~~~~~~~~~~~~~~~
-A staging update \cite{Sprik:1985bz} generates a new section of path between two fixed beads at time
-slices $\alpha$ and $\alpha+m$ where $m < M$. It utilizes the fact that the
-free particle density matrix in \eqref{eq:rho0} is Gaussian and thus obeys a
-convolution relation.  The problem is as follows:  given two known spatial
-positions (beads) on worldline $i$, say $r_{i,\alpha}$ and $r_{i,\alpha+m}$,
-how do we exactly sample the product of free particle density matrices:
+A staging update \cite{Sprik:1985bz} generates a new section of path between
+two fixed beads at time slices $\alpha$ and $\alpha+\overline{m}$ where
+$\overline{m} < M$ is an algorithmic parameter that can be tuned to optimize
+the acceptance rate. It
+utilizes the fact that the free particle density matrix in \eqref{eq:rho0} is
+Gaussian and thus obeys a convolution relation.  The problem is as follows:
+given two known spatial positions (beads) on worldline $i$, say $r_{i,\alpha}$
+and $r_{i,\alpha+\overline{m}}$, how do we exactly sample the product of free particle
+density matrices:
 %
 \begin{equation}
     \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau) \cdots
-    \rho_0(\vec{r}_{i,\alpha+m-1},\vec{r}_{i,\alpha+m};\tau)?
+    \rho_0(\vec{r}_{i,\alpha+\overline{m}-1},\vec{r}_{i,\alpha+\overline{m}};\tau)?
 \end{equation}
 %
 The solution comes by choosing a single term in this product and constructing
@@ -589,12 +592,13 @@ the probability distribution for propagation to that position, constrained by th
 endpoints. Let us drop the worldline index $i$ for brevity:  
 %
 \begin{align}
-    \pi_0(\vec{r}_\gamma| \vec{r}_{\alpha},\vec{r}_{\alpha+m}) &=
+    \pi_0(\vec{r}_\gamma| \vec{r}_{\alpha},\vec{r}_{\alpha+\overline{m}}) &=
     \rho_0(\vec{r}_\alpha,\vec{r}_\gamma;(\gamma-\alpha)\tau) 
-\rho_0(\vec{r}_\gamma,\vec{r}_{\alpha+m};(\alpha+m-\gamma)\tau) \nonumber \\
+\rho_0(\vec{r}_\gamma,\vec{r}_{\alpha+\overline{m}};(\alpha+\overline{m}-\gamma)\tau) \nonumber \\
 &\propto 
 \exp\left[-\frac{|\vec{r}_\gamma-\vec{r}_{\alpha}|^2}{4\lambda (\gamma-\alpha)\tau} \right]
-\exp\left[-\frac{|\vec{r}_{\alpha+m}-\vec{r}_{\gamma}|^2}{4\lambda (\alpha+m-\gamma)\tau} \right]
+\exp\left[-\frac{|\vec{r}_{\alpha+\overline{m}}-\vec{r}_{\gamma}|^2}{4\lambda
+(\alpha+\overline{m}-\gamma)\tau} \right]
 \nonumber \\
 &\propto \exp\left[-\frac{|\vec{r}_\gamma-\overline{\vec{r}}_{\gamma}|^2}{2 \sigma^2}\right]
 \label{eq:pi0}
@@ -603,25 +607,25 @@ endpoints. Let us drop the worldline index $i$ for brevity:
 where 
 %
 \begin{align}
-    \overline{\vec{r}}_\gamma &= \frac{1}{m}\left[(\alpha+m-\gamma)\vec{r}_{\alpha} +
-(\gamma-\alpha)\vec{r}_{\alpha+m}\right] \nonumber \\
-\sigma^2 &= \frac{1}{\frac{1}{(\alpha + m -\gamma)\tau} +
+    \overline{\vec{r}}_\gamma &= \frac{1}{\overline{m}}
+    \left[(\alpha+\overline{m}-\gamma)\vec{r}_{\alpha} +
+    (\gamma-\alpha)\vec{r}_{\alpha+\overline{m}}\right] \nonumber \\
+    \sigma^2 &= \frac{1}{\frac{1}{(\alpha + \overline{m}\gamma)\tau} +
 \frac{1}{(\gamma-\alpha)\tau}}.
 \end{align}
 %
-As \eqref{eq:pi0} is a simple Gaussian with mean $\overline{x}_\gamma$ and
+As \eqref{eq:pi0} is a simple Gaussian with mean $\overline{\vec{r}}_\gamma$ and
 variance $\sigma^2$, it can be exactly sampled.  We are now ready to construct
 our staging move:
 \begin{enumerate}
     \item Choose a random integer $i \in [0,N-1]$ which fixes a worldline.
     \item Choose a random integer $\alpha \in [0,M-1]$ such that the start of
         the state occurs at $\vec{r}_{i,\alpha}$ and it ends at
-        $\vec{r}_{i,\alpha+\overline{m}}$, where $\overline{m}$ is an algorithm
-        parameter that can be optimized. These beads are held fixed during the update.
-    \item Using $\vec{r}_{i,\alpha}$ and $\vec{r}_{i,\alpha+\overline{m}}$ construct the
-        set of new positions
+        $\vec{r}_{i,\alpha+\overline{m}}$.  These beads are held fixed during
+    the update.  \item Using $\vec{r}_{i,\alpha}$ and
+        $\vec{r}_{i,\alpha+\overline{m}}$ construct the set of new positions
         $\{\vec{r}'_{i,\alpha+1},\ldots,\vec{r}'_{i,\alpha+\overline{m}-1}\}$ by exactly
-        sampling \eqref{eq:pi0} for $\gamma = \alpha+1,\ldots,\alpha+m-1]$.
+        sampling \eqref{eq:pi0} for $\gamma = \alpha+1,\ldots,\alpha+m-1$.
     \item Accept the move with probability
     %
 \begin{equation}
@@ -637,7 +641,6 @@ where
 \end{equation}
 %
 \end{enumerate}
-Such a move should enjoy a reasonably high acceptance rate.
 
 \subsubsection{Permutation Sampling}
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -665,7 +668,7 @@ The worm algorithm \cite{Boninsegni:2006ed,Boninsegni:2006gc} (WA) solves the fo
         topologically inequivalent winding sectors using only local updates.
 \end{enumerate}
 This is accomplished by extending the configuration space of worldlines
-discussed in Section~\ref{sec:configurations} to included ``worms'' which are
+discussed in Section~\ref{sec:configurations} to include ``worms'' which are
 open worldlines containing a \emph{head} at time slice $\alpha_h $ and \emph{tail} at
 $\alpha_t$ with a variable imaginary time extent $(\alpha_h -
 \alpha_t)\tau$.  The partition function governing the new system can be written
@@ -677,7 +680,8 @@ as
     g\left(\vec{r}_h,\vec{r}_t; \alpha_h\tau-\alpha_t \tau\right)
 \end{equation}
 %
-where $\mu$ is the grand canonical chemical potential,
+where $Z(N)$ is the canonical partition function at fixed particle number $N$
+in \eqref{eq:Zpermute}, $\mu$ is the grand canonical chemical potential and
 $g(\vec{r},\vec{r'};\tau-\tau')$ is (up to a normalization constant)
 equal to the single particle Matsubara Green function
 %
@@ -687,14 +691,31 @@ g(\vec{r},\vec{r'};\tau-\tau') \equiv \mathcal{Z}\left \langle
 \right \rangle
 \end{equation}
 %
-and $\hat{\mathsf{T}}_\tau$ is the imaginary time ordering operator. Working
-in this extended ensemble is trivial, as we just allow for configurations with
-open worldlines.  Such configurations are unphysical however, and we only make
-measurements when there are no worms present in the simulation. We refer to the 
+with $\hat{\mathsf{T}}_\tau$ the imaginary time ordering operator. Working
+in this extended ensemble requires us to extend the configuration space to
+include open worldlines as shown in Figure~\ref{fig:worm}.  
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.50\columnwidth]{Figures/worm.pdf}
+\end{center}
+\caption{A sample configuration $N=3$ particles and one \emph{worm} in $d$
+spatial dimensions ($d=1$ here) where we have chosen $M=8$ such that $\tau
+= \beta/8$. The worm \emph{head} is located at imaginary time $\alpha_h \tau$ while
+the \emph{tail} is at $\alpha_t \tau$. The imaginary time ``length'' of the worm is
+equal to $(\alpha_h-\alpha_\tau)\tau = 4\tau$ here.}
+\label{fig:worm}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
+Such configurations are unphysical however, and we only make measurements of
+observables when there are no worms present in the simulation. We refer to the
 configurations of $\mathcal{Z}(N)$ as \emph{diagonal}, while those containing
 worms are \emph{off-diagonal}. The numerical constant $C$ is of order one and
 can be tuned to change the relative amount of Monte Carlo time spent in each
 ensemble. 
+
 
 \subsection{Worm Updates}
 %-------------------
