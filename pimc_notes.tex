@@ -536,13 +536,26 @@ us to sample the kinetic part of the action in the ensemble and only consider
 the potential action in the weights. We will outline two types of simple updates,
 center-of-mass and staging moves, and briefly discuss a third permutation move
 that will present us with a difficult challenge.
-%that are depicted schematically in Figure~\ref{fig:pimcMoves}.
 
 
 \subsubsection{Center of Mass}
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.70\columnwidth]{Figures/centerofmass.pdf}
+\end{center}
+\caption{A \emph{center of mass} Monte Carlo update, which translates the entire
+worldline $i$ by a vector displacement $\vec{\Delta}$ without modifying the
+connections between beads.}
+\label{fig:com}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
 A center-of-mass update involves the spatial translation of an entire
-worldline, leaving the kinetic part of the action unchanged.  It proceeds as
+worldline, leaving the kinetic part of the action unchanged.  It is shown
+schematically in Figure~\ref{fig:com} and proceeds as
 follows:
 \begin{enumerate}
     \item Choose a random integer $i \in [0,N-1]$ fixing worldline $i$ with beads located
@@ -572,6 +585,20 @@ where
 
 \subsubsection{Staging}
 %~~~~~~~~~~~~~~~~~~~~~~
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.75\columnwidth]{Figures/staging.pdf}
+\end{center}
+\caption{A \emph{staging} Monte Carlo update which uses the L\'{e}vy
+construction to exactly sample the product of $\overline{m}$ free particle
+density matrices connecting spatial positions $\vec{r}_{i,\alpha}$ and
+$\vec{r}_{i,\alpha+\overline{m}}$.}
+\label{fig:staging}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
 A staging update \cite{Sprik:1985bz} generates a new section of path between
 two fixed beads at time slices $\alpha$ and $\alpha+\overline{m}$ where
 $\overline{m} < M$ is an algorithmic parameter that can be tuned to optimize
@@ -616,7 +643,7 @@ where
 %
 As \eqref{eq:pi0} is a simple Gaussian with mean $\overline{\vec{r}}_\gamma$ and
 variance $\sigma^2$, it can be exactly sampled.  We are now ready to construct
-our staging move:
+our staging move, which is shown in Figure~\ref{fig:staging}:
 \begin{enumerate}
     \item Choose a random integer $i \in [0,N-1]$ which fixes a worldline.
     \item Choose a random integer $\alpha \in [0,M-1]$ such that the start of
@@ -686,7 +713,7 @@ $g(\vec{r},\vec{r'};\tau-\tau')$ is (up to a normalization constant)
 equal to the single particle Matsubara Green function
 %
 \begin{equation}
-g(\vec{r},\vec{r'};\tau-\tau') \equiv \mathcal{Z}\left \langle 
+    g(\vec{r},\vec{r'};\tau-\tau') \equiv \mathcal{Z}(N)\left \langle 
 \hat{\mathsf{T}}_\tau \hat{\psi}(\vec{r},\tau)\hat{\psi}^\dagger(\vec{r}',\tau')
 \right \rangle
 \end{equation}
@@ -698,7 +725,7 @@ include open worldlines as shown in Figure~\ref{fig:worm}.
 % ---------------------------------------------------------------------------------
 \begin{figure}
 \begin{center}
-\includegraphics[width=0.50\columnwidth]{Figures/worm.pdf}
+\includegraphics[width=0.40\columnwidth]{Figures/worm.pdf}
 \end{center}
 \caption{A sample configuration $N=3$ particles and one \emph{worm} in $d$
 spatial dimensions ($d=1$ here) where we have chosen $M=8$ such that $\tau
@@ -731,8 +758,27 @@ that $\{\vec{r}_{1,0},\ldots,\vec{r}_{N,0}\} =
 
 \subsubsection{Open/Close}
 %~~~~~~~~~~~~~~~~~~~~~~~~~
-An \emph{open} update moves the ensemble from diagonal to off-diagonal, and can
-only be attempted when there are no worms present.  It proceeds as follows:
+An \emph{open} update, depicted in Figure~\ref{fig:openclose}, moves the
+ensemble from diagonal to off-diagonal, and can only be attempted when there
+are no worms present.  
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.70\columnwidth]{Figures/openclose.pdf}
+\end{center}
+\caption{The \emph{open} and \emph{close} complimentary Monte Carlo updates.
+For an open move, we select a worldline $i$ and an imaginary time slice
+$\alpha_h$.  $\overline{m}$ beads are then removed from the configuration,
+moving to the off-diagonal ensemble and reducing the total number of physical
+particles by one.  The close move operates in the reverse fashion, where a new
+portion of worldline is constructed between the head and the tail of a worm,
+resulting in a diagonal configuration with an additional particle.}
+\label{fig:openclose}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
+It proceeds as follows:
 
 \begin{enumerate}
     \item Choose a random integer $i \in [0,N-1]$ fixing worldline $i$ with beads located
@@ -771,7 +817,7 @@ If the move is accepted, the configuration now contains $N \to N-1$ physical
 particles and 1 worm.\\[2ex]
 
 \noindent
-The \emph{close} move provides a detailed balance compliment to \emph{open} and
+The \emph{close} move, shown in Figure~\ref{fig:openclose}, provides a detailed balance compliment to \emph{open} and
 moves the ensemble from off-diagonal back to diagonal. It is only possible when
 a worm and $N$ particles are present and contains the following steps:
 \begin{enumerate}
@@ -806,9 +852,10 @@ particles and no worms.
 
 \subsubsection{Insert/Remove}
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-An \emph{insert} move involves the addition to the ensemble of an entire worm
-and moves the configuration from diagonal to off-diagonal.  It is only possible
-if there are no worms present in the system and proceeds as follows:
+ An \emph{insert} move (Figure~\ref{fig:insertremove}) involves the addition to
+ the ensemble of an entire worm and moves the configuration from diagonal to
+ off-diagonal.  It is only possible if there are no worms present in the system
+ and proceeds as follows:
 \begin{enumerate}
     \item Choose a random integer $\alpha_t \in [0,M-1]$; this will be the
         location of the worm tail.
@@ -841,6 +888,21 @@ where
 \end{enumerate}
 If the move is accepted, the simulation cell will contain $N$ particles and 1
 worm.\\[2ex]
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.70\columnwidth]{Figures/insertremove.pdf}
+\end{center}
+\caption{The \emph{insert} and \emph{remove} pair of Monte Carlo updates.  For
+an insert move, a worm of imaginary time extent $m\tau = (\alpha_h -
+\alpha_t)\tau$ is placed at a random set of positions in the simulation cell,
+moving the configuration space to the off-diagonal ensemble.  The remove update
+deletes all beads on worm, moving the simulation to the diagonal ensemble.} 
+\label{fig:insertremove}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
 
 \noindent
 The \emph{remove} update deletes a worm from the configuration, moving the
@@ -875,7 +937,8 @@ worms.
 
 \subsubsection{Advance/Recede}
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The \emph{advance} and \emph{recede} updates do not change the nature of the
+The \emph{advance} and \emph{recede} updates, shown in
+ Figure~\ref{fig:advancerecede} do not change the nature of the
 ensemble and operate only in the off-diagonal case in the presence of a worm.
 For advance:
 \begin{enumerate}
@@ -902,6 +965,21 @@ where
 \end{equation}
 %
 \end{enumerate}
+
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.70\columnwidth]{Figures/advancerecede.pdf}
+\end{center}
+\caption{The \emph{advance} and \emph{recede} Monte Carlo updates.  The advance
+    move propagates the head of the worm forwards in imaginary time by
+    generating a set of new spatial positions.  The recede move does the
+opposite, deleting beads and reducing the length of the worm.}
+\label{fig:advancerecede}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
 
 \noindent
 For recede:
@@ -933,14 +1011,47 @@ imaginary time translation symmetry.
 
 \subsubsection{Swap}
 %~~~~~~~~~~~~~~~~~~~
-The \emph{swap} update is behind the huge speedup inherent in the worm
-algorithm, as it allows us to sample different topological winding sectors
-(permutations) using only local updates.  It does not, therefore, suffer from
-the horrendous $N!$ scaling of brute-force permutation sampling. It only
-operates on off-diagonal configurations, in the presence of a worm, and does
-not change the ensemble. It provides a method by which a single worm grows by
-$n M$ time slices where $1 \le n \le N$ by ``swapping'' its head with a
-proximate unbroken particle worldline.  To perform a swap move:
+%
+% ---------------------------------------------------------------------------------
+% \begin{figure}
+% \begin{center}
+% \includegraphics[width=0.70\columnwidth]{Figures/swap.pdf}
+% \end{center}
+% \caption{The \emph{swap} Monte Carlo update, which does not change the nature
+% of the ensemble, but allows for the sampling of different topological sectors.
+% A new partial worldline is generated between the head of the worm and a
+% neighboring particle worldline position at an advanced time slice.  The
+% original portion of the particle worldline is then erased, ``swapping'' the
+% head of the worm and increasing the imaginary time extent of the worm.}
+% \label{fig:swap}
+%  \end{figure}
+% ---------------------------------------------------------------------------------
+%
+The \emph{swap} update, shown in Figure~\ref{fig:swap} is behind the huge
+speedup inherent in the worm algorithm, as it allows us to sample different
+topological winding sectors (permutations) using only local updates.  It does
+not, therefore, suffer from the horrendous $N!$ scaling of brute-force
+permutation sampling. It only operates on off-diagonal configurations, in the
+presence of a worm, and does not change the ensemble. It provides a method by
+which a single worm grows by $n M$ time slices where $1 \le n \le N$ by
+``swapping'' its head with a proximate unbroken particle worldline.  To
+perform a swap move:
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.70\columnwidth]{Figures/swap.pdf}
+\end{center}
+\caption{The \emph{swap} Monte Carlo update, which does not change the nature
+of the ensemble, but allows for the sampling of different topological sectors.
+A new partial worldline is generated between the head of the worm and a
+neighboring particle worldline position at an advanced time slice.  The
+original portion of the particle worldline is then erased, ``swapping'' the
+head of the worm and increasing the imaginary time extent of the worm.}
+\label{fig:swap}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
 \begin{enumerate}
     \item Determine the time slice $\alpha_h$ and spatial location
         $\vec{r}_{i,\alpha_h}$ of the worm head.
