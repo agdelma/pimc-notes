@@ -91,7 +91,7 @@ general many-body Hamiltonian:
 %
 \begin{align}
     \hat{\mathcal{H}} &= \hat{\mathcal{T}} + \hat{\mathcal{V}} \nonumber \\
-                      &= -\sum_i^N \frac{\hbar^2}{2m_i} \hat{\vec{\nabla}}_i^2 
+                      &= -\sum_{i=1}^N \frac{\hbar^2}{2m_i} \hat{\vec{\nabla}}_i^2 
     + \sum_{i=1}^N \hat{V}_{i} + \sum_{i < j} \hat{U}_{ij}.
 \label{eq:Hamiltonian}
 \end{align}
@@ -111,7 +111,7 @@ ultra-cold atoms, where $V(\vec{r}_i) \sim |\vec{r}_i|^2$ is a harmonic
 trapping potential and the particles interact via an induced dipole-dipole
 interaction $U(\vec{r}_i - \vec{r}_j) \sim |\vec{r}_i-\vec{r}_j|^{-3}$.
 
-The most natural basis states $|\gamma\rangle$ in this case are just a
+The most natural basis states $|\gamma\rangle$ are just a
 collection of the spatial locations of the $N$ particles, where in the case of
 identical particles, the labels are fictitious. We will employ the convenient
 short-hand notation 
@@ -182,11 +182,12 @@ $[\hat{\mathcal{T}},\hat{\mathcal{V}}] \ne 0$ and thus
 In fact, by employing the Baker-Campbell-Hausdorff formula we know:
 %
 \begin{equation}
-    \e{\hat{A}+\hat{B}} = \e{\hat{A}}\e{\hat{B}}\e{-\frac{1}{2}[\hat{A},\hat{B}]}
+    \e{\epsilon(\hat{A}+\hat{B})} = \e{\epsilon\hat{A}}\e{\epsilon\hat{B}}
+    \e{-\frac{\epsilon^2}{2}[\hat{A},\hat{B}]}
     \label{eq:BCH}
 \end{equation}
 %
-and thus 
+where $\epsilon \in \mathbbm{C}$ and thus 
 %
 \begin{equation}
     \hat{\rho} = \e{-\beta\hat{\mathcal{T}}}\e{-\beta\hat{\mathcal{V}}} +
@@ -409,7 +410,7 @@ approximation will be sufficient to illustrate all concepts and we can write
 %
 \begin{align}
     \rho(\R_\alpha, \R_{\alpha+1}; \tau) &= \langle \R_\alpha | 
-    \e{-\tau\hat{\mathcal{T}}} \e{-\tau\hat{\mathcal{V}})}|R_{\alpha+1}\rangle + \mathrm{O}(\tau^2)
+    \e{-\tau\hat{\mathcal{T}}} \e{-\tau\hat{\mathcal{V}})}|\R_{\alpha+1}\rangle + \mathrm{O}(\tau^2)
 \nonumber \\
 &= \int \mathcal{D}\R'\, \langle \R_\alpha | 
 \e{-\tau\hat{\T}}|\R'\rangle \langle \R' | \e{-\tau\hat{\mathcal{V}})}|\R_{\alpha+1}\rangle 
@@ -469,17 +470,17 @@ we can write
 \sum_{j=1}^N\hat{\vec{\nabla}}_j^2} \right | \vec{k}'_1, \cdots, \vec{k}'_N
 \right \rangle \nonumber \\
 &= \prod_{i=1}^N\int \frac{d\vec{k}_i}{(2\pi)^d} \int \frac{d\vec{k}'_i}{(2\pi)^d} 
-\e{-\lambda \tau |\vec{k}'|^2 - i \vec{k}_i \cdot \vec{r}_i + i \vec{k}'_i \cdot
+\e{-\lambda \tau |\vec{k}_i'|^2 - i \vec{k}_i \cdot \vec{r}_i + i \vec{k}'_i \cdot
 \vec{r}'_i} \left \langle \vec{k}_1, \cdots, \vec{k}_N | \vec{k}'_1, \cdots,
 \vec{k}'_N \right \rangle \nonumber \\
 &= \prod_{i=1}^N\int \frac{d\vec{k}_i}{(2\pi)^d} \int \frac{d\vec{k}'_i}{(2\pi)^d} 
-\e{-\lambda \tau |\vec{k}'|^2 - i \vec{k}_i \cdot \vec{r}_i + i \vec{k}'_i \cdot
+\e{-\lambda \tau |\vec{k}_i'|^2 - i \vec{k}_i \cdot \vec{r}_i + i \vec{k}'_i \cdot
 \vec{r}'_i}  (2\pi)^d \delta(\vec{k}_i-\vec{k}'_i) \nonumber \\
 &= \prod_{i=1}^N\int \frac{d\vec{k}_i}{(2\pi)^d} 
-\e{-\lambda \tau |\vec{k}|^2 + i \vec{k}_i \cdot (\vec{r}'_i - \vec{r}_i)}  
+\e{-\lambda \tau |\vec{k}_i|^2 + i \vec{k}_i \cdot (\vec{r}'_i - \vec{r}_i)}  
 \nonumber \\
-&= (4\pi \lambda \tau)^{-Nd/2} \mathrm{exp}\,\left( -\frac{1}{4\lambda
-\tau} \sum_{i=1}^N | \vec{r}_i-\vec{r}'_i|^2 \right) 
+&= (4\pi \lambda \tau)^{-Nd/2} \mathrm{exp}\,\left[ -\frac{1}{4\lambda
+\tau} \sum_{i=1}^N | \vec{r}_i-\vec{r}'_i|^2 \right] 
 \end{align}
 %
 which is just the free particle propagator that can be written in our set
@@ -605,13 +606,13 @@ $\overline{m} < M$ is an algorithmic parameter that can be tuned to optimize
 the acceptance rate. It
 utilizes the fact that the free particle density matrix in \eqref{eq:rho0} is
 Gaussian and thus obeys a convolution relation.  The problem is as follows:
-given two known spatial positions (beads) on worldline $i$, say $r_{i,\alpha}$
-and $r_{i,\alpha+\overline{m}}$, how do we exactly sample the product of free particle
+given two known spatial positions (beads) on worldline $i$, say $\vec{r}_{i,\alpha}$
+and $\vec{r}_{i,\alpha+\overline{m}}$, how do we exactly sample the product of free particle
 density matrices:
 %
 \begin{equation}
     \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau) \cdots
-    \rho_0(\vec{r}_{i,\alpha+\overline{m}-1},\vec{r}_{i,\alpha+\overline{m}};\tau)?
+    \rho_0(\vec{r}_{i,\alpha+\overline{m}-1},\vec{r}_{i,\alpha+\overline{m}};\tau)\; ?
 \end{equation}
 %
 The solution comes by choosing a single term in this product and constructing
@@ -647,23 +648,25 @@ our staging move, which is shown in Figure~\ref{fig:staging}:
 \begin{enumerate}
     \item Choose a random integer $i \in [0,N-1]$ which fixes a worldline.
     \item Choose a random integer $\alpha \in [0,M-1]$ such that the start of
-        the state occurs at $\vec{r}_{i,\alpha}$ and it ends at
+        the stage occurs at $\vec{r}_{i,\alpha}$ and it ends at
         $\vec{r}_{i,\alpha+\overline{m}}$.  These beads are held fixed during
     the update.  \item Using $\vec{r}_{i,\alpha}$ and
         $\vec{r}_{i,\alpha+\overline{m}}$ construct the set of new positions
         $\{\vec{r}'_{i,\alpha+1},\ldots,\vec{r}'_{i,\alpha+\overline{m}-1}\}$ by exactly
-        sampling \eqref{eq:pi0} for $\gamma = \alpha+1,\ldots,\alpha+m-1$.
+        sampling \eqref{eq:pi0} for $\gamma =
+        \alpha+1,\ldots,\alpha+\overline{m}-1$.
     \item Accept the move with probability
     %
 \begin{equation}
-    P_{\text{com}} = \mathrm{min} 
+    P_{\text{staging}} = \mathrm{min} 
     \left\{1,\e{-\tau[\mathcal{V}(\vec{r}'_i)-\mathcal{V}(\vec{r}_i)]} \right\}
 \end{equation}
 %
 where 
 %
 \begin{equation}
-    \mathcal{V}(\vec{r_i}) = \sum_{\gamma=\alpha}^{\alpha+m-1}\left[ V(\vec{r}_{i,\alpha}) + \frac{1}{2}\sum_{j=1}^{N}
+    \mathcal{V}(\vec{r_i}) = \sum_{\gamma=\alpha+1}^{\alpha+\overline{m}-1}
+    \left[ V(\vec{r}_{i,\gamma}) + \frac{1}{2}\sum_{j=1}^{N}
     U(\vec{r}_{i,\gamma}-\vec{r}_{j,\gamma})\right].
 \end{equation}
 %
@@ -673,9 +676,25 @@ where
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We now address the point of how one can sample the sum over permutations of
 particle labels in \eqref{eq:primitiveZ}. This is an onerous task, as for $N$
-particles there are $N!$ possible permutations.  Historically this problem was
-addressed in a brute force manner, by explicitly sampling all possible
-reconnections of worldlines, however this limited the total number of
+particles there are $N!$ possible permutations.
+Historically this problem was addressed in a brute force manner, by explicitly
+sampling all possible reconnections of worldlines, between two fixed imaginary
+time slices as depicted in Figure~\ref{fig:permute} for $N=3$. 
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.70\columnwidth]{Figures/permute.pdf}
+\end{center}
+\caption{A brute-force permutation update where $3!$ different connections of
+    worldlines between two fixed imaginary time slices are
+    directly sampled. The continuous space worm algorithm allows us to sample
+    such permutations using only local updates.}
+\label{fig:permute}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
+However this limited the total number of
 particles that could be efficiently simulated at low temperature to $N \sim
 100$. In 2006, Boninsegni, Prokof'ev and Svistunov introduced a generalization
 of a previous path integral based lattice quantum Monte Carlo scheme
@@ -707,7 +726,7 @@ as
     g\left(\vec{r}_h,\vec{r}_t; \alpha_h\tau-\alpha_t \tau\right)
 \end{equation}
 %
-where $Z(N)$ is the canonical partition function at fixed particle number $N$
+where $\mathcal{Z}(N)$ is the canonical partition function at fixed particle number $N$
 in \eqref{eq:Zpermute}, $\mu$ is the grand canonical chemical potential and
 $g(\vec{r},\vec{r'};\tau-\tau')$ is (up to a normalization constant)
 equal to the single particle Matsubara Green function
@@ -719,7 +738,7 @@ equal to the single particle Matsubara Green function
 \end{equation}
 %
 with $\hat{\mathsf{T}}_\tau$ the imaginary time ordering operator. Working
-in this extended ensemble requires us to extend the configuration space to
+in this extended ensemble requires us to expand the configuration space to
 include open worldlines as shown in Figure~\ref{fig:worm}.  
 %
 % ---------------------------------------------------------------------------------
@@ -761,23 +780,6 @@ that $\{\vec{r}_{1,0},\ldots,\vec{r}_{N,0}\} =
 An \emph{open} update, depicted in Figure~\ref{fig:openclose}, moves the
 ensemble from diagonal to off-diagonal, and can only be attempted when there
 are no worms present.  
-%
-% ---------------------------------------------------------------------------------
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.70\columnwidth]{Figures/openclose.pdf}
-\end{center}
-\caption{The \emph{open} and \emph{close} complimentary Monte Carlo updates.
-For an open move, we select a worldline $i$ and an imaginary time slice
-$\alpha_h$.  $\overline{m}$ beads are then removed from the configuration,
-moving to the off-diagonal ensemble and reducing the total number of physical
-particles by one.  The close move operates in the reverse fashion, where a new
-portion of worldline is constructed between the head and the tail of a worm,
-resulting in a diagonal configuration with an additional particle.}
-\label{fig:openclose}
- \end{figure}
-% ---------------------------------------------------------------------------------
-%
 It proceeds as follows:
 
 \begin{enumerate}
@@ -815,6 +817,23 @@ and $\rho_0$ is the free particle propagator in \eqref{eq:rho0}.
 \end{enumerate}
 If the move is accepted, the configuration now contains $N \to N-1$ physical
 particles and 1 worm.\\[2ex]
+%
+% ---------------------------------------------------------------------------------
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.70\columnwidth]{Figures/openclose.pdf}
+\end{center}
+\caption{The \emph{open} and \emph{close} complimentary Monte Carlo updates.
+For an open move, we select a worldline $i$ and an imaginary time slice
+$\alpha_h$.  $\overline{m}$ beads are then removed from the configuration,
+moving to the off-diagonal ensemble and reducing the total number of physical
+particles by one.  The close move operates in the reverse fashion, where a new
+portion of worldline is constructed between the head and the tail of a worm,
+resulting in a diagonal configuration with an additional particle.}
+\label{fig:openclose}
+ \end{figure}
+% ---------------------------------------------------------------------------------
+%
 
 \noindent
 The \emph{close} move, shown in Figure~\ref{fig:openclose}, provides a detailed balance compliment to \emph{open} and
@@ -1073,16 +1092,17 @@ where the normalization factor is
 \end{equation}
 %
 \item Delete the set of $\overline{m}-1$ beads
-    $\{\vec{r}_{j,\alpha_s+1},\ldots,\vec{r}_{j,\alpha_s+m-1} \}$.
+    $\{\vec{r}_{j,\alpha_s+1},\ldots,\vec{r}_{j,\alpha_s+\overline{m}-1} \}$.
 \item Construct a new partial worldline containing the set of particle
-    positions $\{\vec{r}'_{i,\alpha_h+1},\ldots \vec{r}'_{i,\alpha_h+m-1}\}$
+    positions $\{\vec{r}'_{i,\alpha_h+1},\ldots
+    \vec{r}'_{i,\alpha_h+\overline{m}-1}\}$
     connecting $\vec{r}_{i,\alpha_h}$ and $\vec{r}_{j,\alpha_p}$ sampled from
     the product of $\overline{m}$ free particle propagators
-    $\prod_{\alpha=\alpha_h}^{\alpha_h+m-1}
+    $\prod_{\alpha=\alpha_h}^{\alpha_h+\overline{m}-1}
     \rho_0(\vec{r}_{i,\alpha},\vec{r}_{i,\alpha+1};\tau)$ where
-    $\vec{r}_{i,\alpha_h + m} = \vec{r}_{j,\alpha_p}$.
+    $\vec{r}_{i,\alpha_h + \overline{m}} = \vec{r}_{j,\alpha_p}$.
 \item The head of the worm is now located at $\vec{r}_{j,\alpha_s}$ and its
-    length has increased by the number of time slices contained in the 
+    length has increased by the number of beads contained in the 
     particle that was labeled by $j$.
 \item Accept the move with probability
     %
@@ -1094,7 +1114,7 @@ where the normalization factor is
 %
 where 
 \begin{equation}
-    \Delta\mathcal{V} = \sum_{\alpha=\alpha_h}^{\alpha_h+\overline{m}} \left\{ 
+    \Delta\mathcal{V} = \sum_{\alpha=\alpha_h+1}^{\alpha_h+\overline{m}-1} \left\{ 
         V(\vec{r}'_{i,\alpha}) - V(\vec{r}_{j,\alpha}) + \frac{1}{2}\sum_{k=1}^N
         \left[ U(\vec{r}'_{i,\alpha}-\vec{r}_{k,\alpha}) -
     U(\vec{r}_{j,\alpha}-\vec{r}_{k,\alpha})\right] \right\}.
