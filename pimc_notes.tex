@@ -787,7 +787,7 @@ It proceeds as follows:
         at $\vec{r}_{i,\alpha}$.
     \item Generate a random integer $\alpha_h \in [0,M-1]$; this
         will be the location of the head of the proposed worm.
-    \item Generate a random integer $m \in [0,\overline{m}-1]$ where $\overline{m} <
+    \item Generate a random integer $m \in [1,\overline{m}-1]$ where $\overline{m} <
         M$ is a parameter to be optimized. Starting at time slice $\alpha_h$,
         find $\alpha_t = \alpha_h + m$, which will be the time slice of the tail.
     \item Remove the set of $m-1$ beads
@@ -842,7 +842,7 @@ a worm and $N$ particles are present and contains the following steps:
 \begin{enumerate}
     \item Identify the ``particle'' label $i$ of the worm and the integer number of time steps, $m$ between $\alpha_h$ and
         $\alpha_\tau$ between the head and tail where we assume $\alpha_h > \alpha_t$ modulo $M$.
-\item If $m=0$ or $m\ge \overline{m}$ reject the move immediately.
+\item If $m=0$ or $m> \overline{m}$ reject the move immediately.
 \item Otherwise, generate a new partial worldline containing $m-1$ particle positions connecting 
     $\vec{r}_{i,\alpha_h}$ and $\vec{r}_{i,\alpha_t}$: $\{\vec{r}'_{i,\alpha_h+1},\ldots,
     \vec{r}'_{,\alpha_h+m-1}\}$ where the individual positions are sampled from
@@ -878,7 +878,7 @@ particles and no worms.
 \begin{enumerate}
     \item Choose a random integer $\alpha_t \in [0,M-1]$; this will be the
         location of the worm tail.
-    \item Choose a random integer $m \in [0,\overline{m}-1]$, this will be the
+    \item Choose a random integer $m \in [1,\overline{m}]$, this will be the
         length of the worm.
     \item Randomly choose a position inside the simulation cell of volume $V$
         and label it $\vec{r}'_{i,\alpha_t}$ where $i$ is the particle label of
@@ -963,7 +963,7 @@ For advance:
 \begin{enumerate}
     \item Determine the time slice $\alpha_h$ and spatial location
         $\vec{r}_{i,\alpha_h}$ of the worm head.
-    \item Choose a random integer $m \in [0,\overline{m}-1]$.
+    \item Choose a random integer $m \in [1,\overline{m}]$.
     \item Generate a partial worldline composed of the set of new particle positions 
         $\{\vec{r}'_{i,\alpha_h+1},\ldots, \vec{r}'_{i,\alpha_h+m}\}$ which are
         sampled from $\prod_{\alpha=\alpha_h}^{\alpha_h+m-1}
@@ -1005,7 +1005,8 @@ For recede:
 \begin{enumerate}
     \item Determine the time slice $\alpha_h$ and spatial location
         $\vec{r}_{i,\alpha_h}$ of the worm head.
-    \item Choose a random integer $m \in [0,\overline{m}-1]$.
+    \item Choose a random integer $m \in [1,\overline{m}]$.
+    \item Reject if $m > |\alpha_h-\alpha_t|$.
     \item Delete the partial worldline containing the set of particle coordinates: 
         $\{\vec{r}_{i,\alpha_h-(m-1)},\ldots, \vec{r}_{i,\alpha_h}\}$.
 \item Accept the move with probability
@@ -1060,21 +1061,21 @@ head of the worm and increasing the imaginary time extent of the worm.}
         $\vec{r}_{i,\alpha_h}$ of the worm head.
     \item Advance to the time slice of the \emph{pivot} bead $\alpha_p =
         \alpha_h + \overline{m}$ where the addition is modulo $M$ and find the
-        set of all beads $\ell_p \equiv \{\vec{r}_{k,\alpha_p}\}$ such that
+        set of all beads $\ell_h \equiv \{\vec{r}_{k,\alpha_p}\}$ such that
         $|\vec{r}_{i,\alpha_h} - \vec{r}_{k,\alpha_p}| < R$ where $R \in
         \mathbbm{R}$ is a simulation parameter to be optimized.
 \item Use tower sampling to select a single bead $\vec{r}_{j,\alpha_p} \in
     \{\vec{r}_{k,\alpha_p}\}$ from the list with probability
     %
 \begin{equation}
-    P_p = \frac{1}{\Sigma_p}
+    P_{\rm pivot} = \frac{1}{\Sigma_h}
     \rho_0(\vec{r}_{i,\alpha_h},\vec{r}_{j,\alpha_p};\overline{m}\tau)
 \end{equation}
 %
 where the normalization factor is
 %
 \begin{equation}
-\Sigma_p = \sum_{\vec{r}\in\ell_p} 
+\Sigma_h = \sum_{\vec{r}\in\ell_h} 
     \rho_0(\vec{r}_{i,\alpha_h},\vec{r};\overline{m}\tau).
 \end{equation}
 %
@@ -1083,12 +1084,12 @@ where the normalization factor is
     \alpha_p-\overline{m}$: $\vec{r}_{j,\alpha_s}$. If the tail of the worm,
     $\vec{r}_{i,\alpha_t}$, is encountered during this process, immediately reject the move.
 \item If $|\vec{r}_{j,\alpha_p} - \vec{r}_{j,\alpha_s}| \ge R$ reject the move.
-\item Otherwise, create a second list $\ell_s \equiv \{\vec{r}_{k,\alpha_s}\}$ such
+\item Otherwise, create a second list $\ell_s \equiv \{\vec{r}_{k,\alpha_p}\}$ such
     that $|\vec{r}_{j,\alpha_s} - \vec{r}_{k,\alpha_p}| < R$ and form the sum
     %
 \begin{equation}
 \Sigma_s = \sum_{\vec{r}\in\ell_s} 
-    \rho_0(\vec{r}_{j,\alpha_p},\vec{r};\overline{m}\tau).
+    \rho_0(\vec{r}_{j,\alpha_s},\vec{r};\overline{m}\tau).
 \end{equation}
 %
 \item Delete the set of $\overline{m}-1$ beads
