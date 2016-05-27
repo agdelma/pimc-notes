@@ -4,12 +4,18 @@ harmonic oscillator in one spatial dimension.
 '''
 
 import numpy as np
-import pylab as pl
 
+# ------------------------------------------------------------------------------------------- 
+def SHOEnergyExact(T):
+    '''The exact SHO energy when \hbar \omega/ k_B = 1.''' 
+    return 0.5/np.tanh(0.5/T)
+
+# ------------------------------------------------------------------------------------------- 
 def HarmonicOscillator(R):
     '''Simple harmonic oscillator potential with m = 1 and \omega = 1.'''
     return 0.5*np.dot(R,R);
 
+# ------------------------------------------------------------------------------------------- 
 class Paths:
     '''The set of worldlines, action and estimators.'''
     def __init__(self,beads,tau,lam):
@@ -123,7 +129,10 @@ def CenterOfMassMove(Path,ptcl):
 # ------------------------------------------------------------------------------------------- 
 def StagingMove(Path,ptcl):
     '''Attempts a staging move, which exactly samples the free particle
-    propagator between two positions.'''
+    propagator between two positions.
+    
+    Note: does not work for periodic boundary conditions.
+    '''
 
     # the length of the stage
     m = 16
@@ -163,7 +172,7 @@ def StagingMove(Path,ptcl):
 
 # ------------------------------------------------------------------------------------------- 
 def main():
-    T = 1.25  # temperature in Kelvin  
+    T = 2.25  # temperature in Kelvin  
     lam = 0.5    # \hbar^2/2m k_B
 
     numParticles = 1    
@@ -197,6 +206,7 @@ def main():
 
     print 'Energy = %8.4f +/- %6.4f' % (np.mean(Energy),
                                         (np.std(Energy)/np.sqrt(len(Energy))))
+    print 'Eexact = %8.4f' % SHOEnergyExact(T)
 
 # ----------------------------------------------------------------------
 if __name__ == "__main__": 
