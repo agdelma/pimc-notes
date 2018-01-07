@@ -1,6 +1,6 @@
 '''
 A path-integral quantum Monte Carlo program to compute the energy of the simple
-harmonic oscillator in one spatial dimension.
+harmonic oscillator in one spatial dimension with open boundary conditions.
 '''
 
 from __future__ import print_function
